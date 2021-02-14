@@ -38,8 +38,8 @@ namespace Computation
             // IMPORTANT: should be bedore sources' initialization, as the initial coordinates depend on ErrorMargin
             AzimuthalStep = 1e-3;
             PolarStep = 1e-2;
-            RadiusMargin = Radius - 1e-4;
-            ErrorMargin = 1e-4;
+            RadiusMargin = Radius - 1e-3;
+            ErrorMargin = 1e-3;
 
             if (sources != null)
             {
@@ -161,10 +161,6 @@ namespace Computation
                     phiStepComponents[i] = -descentRate * GradComponentPhi(i);
                     thetaStepComponents[i] = -descentRate * GradComponentTheta(i);
 
-                    // TEST: clip step components beforehand
-                    rhoStepComponents[i] = Math.Max(Math.Min(rhoStepComponents[i], rhoStepComponents[i]), rhoStepComponents[i]);
-                    thetaStepComponents[i] = Math.Max(Math.Min(thetaStepComponents[i], maxThetaStepComponents[i]), minThetaStepComponents[i]);
-
                     // Increase normalizer
                     normalizer += Math.Pow(rhoStepComponents[i], 2);
                     normalizer += Math.Pow(phiStepComponents[i], 2);
@@ -184,6 +180,17 @@ namespace Computation
 
                     // Diagnostic output
                     Trace.WriteLine($"Step's components for source {i} after normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+                }
+
+
+                // TEST: clip step components after normalization
+                for (int i = 0; i < SourceAmount; ++i)
+                {
+                    rhoStepComponents[i] = Math.Max(Math.Min(rhoStepComponents[i], maxRhoStepComponents[i]), minRhoStepComponents[i]);
+                    thetaStepComponents[i] = Math.Max(Math.Min(thetaStepComponents[i], maxThetaStepComponents[i]), minThetaStepComponents[i]);
+
+                    // Diagnostic output
+                    Trace.WriteLine($"Step's components for source {i} after clipping are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
                 }
 
                 // Make the step
