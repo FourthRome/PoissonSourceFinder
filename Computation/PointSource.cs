@@ -27,7 +27,7 @@ namespace Computation
         //-------------
         // Constructors
         //-------------
-        public PointSource(double rho=0.0, double phi=0.0, double theta=0.0) : this()
+        public PointSource(double rho, double phi, double theta) : this()
         {
             Phi = phi;
             Theta = theta;
