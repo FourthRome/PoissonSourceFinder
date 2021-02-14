@@ -136,12 +136,34 @@ namespace Computation
                 //    Trace.WriteLine($"Step's components for source {i} are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
                 //}
 
+                // TEST: clip step components beforehand
+                double[] minRhoStepComponents = new double[SourceAmount];
+                double[] maxRhoStepComponents = new double[SourceAmount];
+                for (int i = 0; i < SourceAmount; ++i)
+                {
+                    minRhoStepComponents[i] = ErrorMargin - Sources[i].Rho;
+                    maxRhoStepComponents[i] = RadiusMargin - Sources[i].Rho;
+                }
+
+                // TEST: clip step components beforehand
+                double[] minThetaStepComponents = new double[SourceAmount];
+                double[] maxThetaStepComponents = new double[SourceAmount];
+                for (int i = 0; i < SourceAmount; ++i)
+                {
+                    minThetaStepComponents[i] = - Sources[i].Theta;
+                    maxThetaStepComponents[i] = Math.PI - Sources[i].Theta;
+                }
+
                 // Compute the steps
                 for (int i = 0; i < SourceAmount; ++i)
                 {
                     rhoStepComponents[i] = -descentRate * GradComponentRho(i);
                     phiStepComponents[i] = -descentRate * GradComponentPhi(i);
                     thetaStepComponents[i] = -descentRate * GradComponentTheta(i);
+
+                    // TEST: clip step components beforehand
+                    rhoStepComponents[i] = Math.Max(Math.Min(rhoStepComponents[i], rhoStepComponents[i]), rhoStepComponents[i]);
+                    thetaStepComponents[i] = Math.Max(Math.Min(thetaStepComponents[i], maxThetaStepComponents[i]), minThetaStepComponents[i]);
 
                     // Increase normalizer
                     normalizer += Math.Pow(rhoStepComponents[i], 2);
@@ -245,13 +267,13 @@ namespace Computation
             for (int i = 0; i < SourceAmount; ++i)
             {
                 // Rho should lie between internal and external spheres' radiuses (the lower boundary is needed because of the gradient's properties)
-                if (Sources[i].Rho >= RadiusMargin || Sources[i].Rho <= ErrorMargin)
+                if (Sources[i].Rho > RadiusMargin || Sources[i].Rho < ErrorMargin)
                 {
                     return true;
                 }
 
                 // Theta should lie within [0; Pi] segment, but, unlike phi, does not form circular trajectory, we should account for that
-                if (Sources[i].Theta <= 0 || Sources[i].Theta >= Math.PI)
+                if (Sources[i].Theta < 0 || Sources[i].Theta > Math.PI)
                 {
                     return true;
                 }
