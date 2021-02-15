@@ -104,7 +104,7 @@ namespace Computation
                 // Here goes a single step of the gradient descent
 
                 // Diagnostic output
-                Trace.WriteLine($"\n____________________________________________Starting step {stepCount}_________________________________________");
+                Console.WriteLine($"\n____________________________________________Starting step {stepCount}_________________________________________");
 
                 // First compute the step's components towards the antigradient, then make them
                 double[] rhoStepComponents = new double[SourceAmount];
@@ -114,7 +114,7 @@ namespace Computation
                 // Diagnostic output
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Trace.WriteLine($"Source {i}'s coordinates before the step: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                    Console.WriteLine($"Source {i}'s coordinates before the step: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
                 }
 
                 // Coefficient for gradient normalization
@@ -133,7 +133,7 @@ namespace Computation
                 //    normalizer += Math.Pow(thetaStepComponents[i], 2);
 
                 //    // Diagnostic output
-                //    Trace.WriteLine($"Step's components for source {i} are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+                //    Console.WriteLine($"Step's components for source {i} are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
                 //}
 
                 // TEST: clip step components beforehand
@@ -167,7 +167,7 @@ namespace Computation
                     normalizer += Math.Pow(thetaStepComponents[i], 2);
 
                     // Diagnostic output
-                    Trace.WriteLine($"Step's components for source {i} before normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+                    Console.WriteLine($"Step's components for source {i} before normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
                 }
 
                 // Normalization
@@ -179,7 +179,7 @@ namespace Computation
                     thetaStepComponents[i] /= normalizer;
 
                     // Diagnostic output
-                    Trace.WriteLine($"Step's components for source {i} after normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+                    Console.WriteLine($"Step's components for source {i} after normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
                 }
 
 
@@ -190,7 +190,7 @@ namespace Computation
                     thetaStepComponents[i] = Math.Max(Math.Min(thetaStepComponents[i], maxThetaStepComponents[i]), minThetaStepComponents[i]);
 
                     // Diagnostic output
-                    Trace.WriteLine($"Step's components for source {i} after clipping are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+                    Console.WriteLine($"Step's components for source {i} after clipping are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
                 }
 
                 //// TEST: renormalize components after clipping
@@ -211,7 +211,7 @@ namespace Computation
                 //    thetaStepComponents[i] /= normalizer;
 
                 //    // Diagnostic output
-                //    Trace.WriteLine($"Step's components for source {i} after second normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+                //    Console.WriteLine($"Step's components for source {i} after second normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
                 //}
 
 
@@ -226,7 +226,7 @@ namespace Computation
                 //    Sources[i].Theta = Math.Min(Math.PI, Math.Max(0, Sources[i].Theta + thetaStepComponents[i]));  // TEST: just clip theta
 
                 //    // Diagnostic output
-                //    Trace.WriteLine($"Source {i}'s coordinates before validation: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                //    Console.WriteLine($"Source {i}'s coordinates before validation: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
                 //}
 
                 // Make the largest step that improves quality
@@ -241,11 +241,11 @@ namespace Computation
                     //Sources[i].Theta = Math.Min(Math.PI, Math.Max(0, Sources[i].Theta + thetaStepComponents[i]));  // TEST: just clip theta
 
                     // Diagnostic output
-                    Trace.WriteLine($"Source {i}'s coordinates after initial step: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                    Console.WriteLine($"Source {i}'s coordinates after initial step: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
                 }
 
                 // Diagnostic output
-                Trace.WriteLine($"_______________________________Starting step reduction_________________________________");
+                Console.WriteLine($"_______________________________Starting step reduction_________________________________");
 
                 int reductionCount = 0;
                 double stepFraction = 0.5;  // If the step will not actually minimize loss, we halve it and try again
@@ -254,8 +254,8 @@ namespace Computation
 
                     reductionCount += 1;
                     // Diagnostic output
-                    Trace.WriteLine($"''''''''''''''''''''''''Reduction for step {stepCount}: {reductionCount}''''''''''''''''''''''''''''''''''''''''''");
-                    Trace.WriteLine($"Was out of borders: {CoordinatesOutOfBorders()}, old target value: {oldTargetValue}, new target value: {TargetFunction()}");
+                    Console.WriteLine($"''''''''''''''''''''''''Reduction for step {stepCount}: {reductionCount}''''''''''''''''''''''''''''''''''''''''''");
+                    Console.WriteLine($"Was out of borders: {CoordinatesOutOfBorders()}, old target value: {oldTargetValue}, new target value: {TargetFunction()}");
 
                     for (int i = 0; i < SourceAmount; ++i)
                     {
@@ -266,16 +266,16 @@ namespace Computation
                         //Sources[i].Theta = Math.Min(Math.PI, Math.Max(0, Sources[i].Theta + thetaStepComponents[i]));  // TEST: just clip theta
 
                         // Diagnostic output
-                        Trace.WriteLine($"Now trying coordinates for source {i}: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                        Console.WriteLine($"Now trying coordinates for source {i}: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
                     }
                     stepFraction /= 2;
                 }
 
                 // Diagnostic output
-                Trace.WriteLine($".............................Final values for step {stepCount} after {reductionCount} reductions...........................");
+                Console.WriteLine($".............................Final values for step {stepCount} after {reductionCount} reductions...........................");
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Trace.WriteLine($"Source {i}'s coordinates: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                    Console.WriteLine($"Source {i}'s coordinates: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
                 }
 
                 // The step was made without proper validation, can be non-standard now, so:
@@ -284,7 +284,7 @@ namespace Computation
                 // Diagnostic output
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Trace.WriteLine($"Source {i}'s coordinates after validation: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                    Console.WriteLine($"Source {i}'s coordinates after validation: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
                 }
 
                 // Update statistics

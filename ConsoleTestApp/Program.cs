@@ -23,13 +23,31 @@ namespace ConsoleTestApp
             //prediction.PolarRanges.Add(new Tuple<double, double>(0.0, Math.PI));
             //prediction.SearchForSources();
 
-            Console.WriteLine(prediction.LocalLossFunction(0.0, 0.0));
+
+            Console.WriteLine($"\nFinal results:\n");
+            int count = 0; // TODO: there was an analog to Python's .enumerate(); find it
             foreach (var source in prediction.Sources)
             {
-                Console.WriteLine(source.Rho);
-                Console.WriteLine(source.Phi);
-                Console.WriteLine(source.Theta);
+                Console.WriteLine($"Source {count}'s coordinates are:");
+                Console.WriteLine($"-rho: {source.Rho}");
+                Console.WriteLine($"-phi: {source.Phi}");
+                Console.WriteLine($"-theta: {source.Theta}");
+                Console.WriteLine();
+                ++count;
             }
+
+            count = 0;
+            Console.WriteLine($"\nSources' real coordinates:\n");
+            foreach (var source in groundTruth.Sources)
+            {
+                Console.WriteLine($"Source {count}'s coordinates are:");
+                Console.WriteLine($"-rho: {source.Rho}");
+                Console.WriteLine($"-phi: {source.Phi}");
+                Console.WriteLine($"-theta: {source.Theta}");
+                Console.WriteLine();
+                ++count;
+            }
+
             Console.ReadLine();
 
         }
