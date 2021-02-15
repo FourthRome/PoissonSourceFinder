@@ -36,11 +36,11 @@ namespace Computation
             PolarRanges = new List<Tuple<double, double>>();
 
             // Setting the hyperparameters TODO: set them from outside
-            // IMPORTANT: should be bedore sources' initialization, as the initial coordinates depend on ErrorMargin
+            // IMPORTANT: should be before sources' initialization, as the initial coordinates depend on ErrorMargin
             AzimuthalStep = 1e-2;
             PolarStep = 1e-2;
             SmallestRho = 1e-2;
-            BiggestRho = Radius - SmallestRho;
+            BiggestRho = Radius - 1e-2;
             ErrorMargin = 1e-2;
 
             if (sources != null)
@@ -106,7 +106,7 @@ namespace Computation
                 // Here goes a single step of the gradient descent
 
                 // Diagnostic output
-                Console.WriteLine($"\n____________________________________________Starting step {stepCount}_________________________________________");
+                Console.WriteLine($"\n\n________________________________________Starting step {stepCount}________________________________________");
 
                 // First compute the step's components towards the antigradient, then make them
                 double[] rhoStepComponents = new double[SourceAmount];
@@ -247,7 +247,7 @@ namespace Computation
                 }
 
                 // Diagnostic output
-                Console.WriteLine($"_______________________________Starting step reduction_________________________________");
+                Console.WriteLine($"________________________________________Starting step reduction________________________________________");
 
                 int reductionCount = 0;
                 double stepFraction = 0.5;  // If the step will not actually minimize loss, we halve it and try again
@@ -256,7 +256,7 @@ namespace Computation
 
                     reductionCount += 1;
                     // Diagnostic output
-                    Console.WriteLine($"''''''''''''''''''''''''Reduction for step {stepCount}: {reductionCount}''''''''''''''''''''''''''''''''''''''''''");
+                    Console.WriteLine($"________________________________________Reduction for step {stepCount}: {reductionCount}________________________________________");
                     Console.WriteLine($"Was out of borders: {CoordinatesOutOfBorders()}, old target value: {oldTargetValue}, new target value: {TargetFunction()}");
 
                     for (int i = 0; i < SourceAmount; ++i)
@@ -274,7 +274,9 @@ namespace Computation
                 }
 
                 // Diagnostic output
-                Console.WriteLine($".............................Final values for step {stepCount} after {reductionCount} reductions...........................");
+                Console.WriteLine($"________________________________________Final values for step {stepCount} after {reductionCount} reductions________________________________________");
+                Console.WriteLine($"Old target value: {oldTargetValue}, new target value: {TargetFunction()}");
+                
                 for (int i = 0; i < SourceAmount; ++i)
                 {
                     Console.WriteLine($"Source {i}'s coordinates: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
