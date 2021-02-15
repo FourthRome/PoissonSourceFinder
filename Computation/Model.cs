@@ -14,7 +14,8 @@ namespace Computation
         public PointSource[] Sources { get; set; }  // Current sources' coordinates
         public int SourceAmount { get; set; }  // Amount of sources
         public double Radius { get; set; }  // Sphere's radius
-        public double RadiusMargin { get; set; }  // Upper boundary for sources' coordinates
+        public double BiggestRho { get; set; }  // Upper boundary for sources' coordinates
+        public double SmallestRho { get; set; }  // Lower boundary for sources' coordinates
         public List<Tuple<double, double>> AzimuthalRanges { get; set; }  // Part of the sphere surface we'll be processing
         public List<Tuple<double, double>> PolarRanges { get; set; }  // Same here
         public Func<double, double, double> GroundTruthNormalDerivative { get; set; }  // Loss function uses it
@@ -38,7 +39,8 @@ namespace Computation
             // IMPORTANT: should be bedore sources' initialization, as the initial coordinates depend on ErrorMargin
             AzimuthalStep = 1e-2;
             PolarStep = 1e-2;
-            RadiusMargin = Radius - 1e-2;
+            SmallestRho = 1e-2;
+            BiggestRho = Radius - SmallestRho;
             ErrorMargin = 1e-2;
 
             if (sources != null)
@@ -50,7 +52,7 @@ namespace Computation
                 Sources = new PointSource[SourceAmount];
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Sources[i] = new PointSource(2 * ErrorMargin, i * 2 * Math.PI / SourceAmount, Math.PI / 2);  // Outside of the smallest suitable sphere, and spread apart horizontally
+                    Sources[i] = new PointSource(Radius / 2, i * 2 * Math.PI / SourceAmount, Math.PI / 2);  // Outside of the smallest suitable sphere, and spread apart horizontally
                 }
             }
         }
@@ -141,8 +143,8 @@ namespace Computation
                 double[] maxRhoStepComponents = new double[SourceAmount];
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    minRhoStepComponents[i] = ErrorMargin - Sources[i].Rho;
-                    maxRhoStepComponents[i] = RadiusMargin - Sources[i].Rho;
+                    minRhoStepComponents[i] = SmallestRho - Sources[i].Rho;
+                    maxRhoStepComponents[i] = BiggestRho - Sources[i].Rho;
                 }
 
                 // TEST: clip step components beforehand
@@ -298,7 +300,7 @@ namespace Computation
             for (int i = 0; i < SourceAmount; ++i)
             {
                 // Rho should lie between internal and external spheres' radiuses (the lower boundary is needed because of the gradient's properties)
-                if (Sources[i].Rho > RadiusMargin || Sources[i].Rho < ErrorMargin)
+                if (Sources[i].Rho > BiggestRho || Sources[i].Rho < SmallestRho)
                 {
                     return true;
                 }
@@ -320,7 +322,7 @@ namespace Computation
             {
                 // TODO: should we really check this now, after improving steps' logic?
                 // Rho should lie between internal and external spheres' radiuses (the lower boundary is needed because of the gradient's properties)
-                Sources[i].Rho = Math.Max(Math.Min(Sources[i].Rho, RadiusMargin), ErrorMargin);
+                Sources[i].Rho = Math.Max(Math.Min(Sources[i].Rho, BiggestRho), SmallestRho);
 
                 // Phi should lie within [0; 2*Pi) half-open interval
                 Sources[i].Phi = Sources[i].Phi % (2 * Math.PI);
