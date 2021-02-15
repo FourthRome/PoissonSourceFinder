@@ -53,7 +53,7 @@ namespace Computation
         //---------------
         // Static methods
         //---------------
-        PointSource FromCarthesian(CarthesianPoint source)
+        public static PointSource FromCarthesianPoint(CarthesianPoint source)
         {
             double rho = Math.Sqrt(Math.Pow(source.X, 2) + Math.Pow(source.Y, 2) + Math.Pow(source.Z, 2));
             double phi = Math.Atan2(source.Y, source.X);

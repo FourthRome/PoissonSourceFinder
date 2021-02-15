@@ -34,12 +34,17 @@ namespace Computation
         //---------------
         // Static methods
         //---------------
-        public static CarthesianPoint FromPolar(PointSource source)
+        public static CarthesianPoint FromPolarCoordinates(double rho, double phi, double theta)
         {
-            double x = source.Rho * Math.Cos(source.Phi) * Math.Sin(source.Theta);
-            double y = source.Rho * Math.Sin(source.Phi) * Math.Sin(source.Theta);
-            double z = source.Rho * Math.Cos(source.Theta);
+            double x = rho * Math.Cos(phi) * Math.Sin(theta);
+            double y = rho * Math.Sin(phi) * Math.Sin(theta);
+            double z = rho * Math.Cos(theta);
             return new CarthesianPoint(x, y, z);
+        }
+
+        public static CarthesianPoint FromPolarPoint(PointSource source)
+        {
+            return FromPolarCoordinates(source.Rho, source.Phi, source.Theta);
         }
 
         public static CarthesianPoint operator -(CarthesianPoint a)

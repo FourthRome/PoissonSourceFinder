@@ -11,7 +11,7 @@ namespace Computation
         // Public properties
         //------------------
         
-        public PointSource[] Sources { get; set; }  // Current sources' coordinates
+        public PointSource[] Sources { get; set; }  // Candidate sources' coordinates
         public int SourceAmount { get; set; }  // Amount of sources
         public double Radius { get; set; }  // Sphere's radius
         public double BiggestRho { get; set; }  // Upper boundary for sources' coordinates
@@ -94,12 +94,32 @@ namespace Computation
             return Math.Pow(GroundTruthNormalDerivative(phi, theta) - NormalDerivative(phi, theta), 2) * Math.Pow(Radius, 2) * Math.Sin(theta);
         }
 
-        // The main method, finding the sources, including all stages
+        // TEST: The brand new main method, finding the sources, including all stages
         public void SearchForSources()
         {
             double descentRate = 1.0;  // Hyperparameter: how fast should we descend TODO: descent logic should be revised
             int stepCount = 1;  // Statistics for the log
-            //PointSource[] sourceCandidates = new PointSource[SourceAmount];
+
+            // Declare and initialize necessary data structures
+            PointSource[] oldSources = new PointSource[SourceAmount];
+            for (int i = 0; i < SourceAmount; ++i)
+            {
+                oldSources[i] = new PointSource(Sources[i].Rho, Sources[i].Phi, Sources[i].Theta);  // We initialize this just to be safe
+            }
+
+            CarthesianPoint[] proposedMove = new CarthesianPoint[SourceAmount];
+            for (int i = 0; i < SourceAmount; ++i)
+            {
+                proposedMove[i] = new CarthesianPoint(0, 0, 0);  // We initialize this just to be safe
+            }
+
+            CarthesianPoint[] stepCandidates = new CarthesianPoint[SourceAmount];
+            for (int i = 0; i < SourceAmount; ++i)
+            {
+                stepCandidates[i] = new CarthesianPoint(0, 0, 0);  // We initialize this just to be safe
+            }
+
+
 
             while (TargetFunction() > ErrorMargin)
             {
@@ -108,139 +128,35 @@ namespace Computation
                 // Diagnostic output
                 Console.WriteLine($"\n\n________________________________________Starting step {stepCount}________________________________________");
 
-                // First compute the step's components towards the antigradient, then make them
-                double[] rhoStepComponents = new double[SourceAmount];
-                double[] phiStepComponents = new double[SourceAmount];
-                double[] thetaStepComponents = new double[SourceAmount];
+                // Backup old sources
+                for (int i = 0; i < SourceAmount; ++i)
+                {
+                    oldSources[i].Rho = Sources[i].Rho;
+                    oldSources[i].Phi = Sources[i].Phi;
+                    oldSources[i].Theta = Sources[i].Theta;
+                }
 
                 // Diagnostic output
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Console.WriteLine($"Source {i}'s coordinates before the step: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                    Console.WriteLine($"Source {i}'s coordinates before the step: {oldSources[i].Rho}, {oldSources[i].Phi}, {oldSources[i].Theta}");
                 }
 
-                // Coefficient for gradient normalization
-                double normalizer = 0.0;
-
-                // Compute the steps
-                //for (int i = 0; i < SourceAmount; ++i)
-                //{
-                //    rhoStepComponents[i] = -descentRate * GradComponentRho(i);
-                //    phiStepComponents[i] = -descentRate  * GradComponentPhi(i);
-                //    thetaStepComponents[i] = -descentRate * GradComponentTheta(i);
-
-                //    // Increase normalizer
-                //    normalizer += Math.Pow(rhoStepComponents[i], 2);
-                //    normalizer += Math.Pow(phiStepComponents[i], 2);
-                //    normalizer += Math.Pow(thetaStepComponents[i], 2);
-
-                //    // Diagnostic output
-                //    Console.WriteLine($"Step's components for source {i} are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
-                //}
-
-                // TEST: clip step components beforehand
-                double[] minRhoStepComponents = new double[SourceAmount];
-                double[] maxRhoStepComponents = new double[SourceAmount];
+                // Compute the steps towards the antigradient
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    minRhoStepComponents[i] = SmallestRho - Sources[i].Rho;
-                    maxRhoStepComponents[i] = BiggestRho - Sources[i].Rho;
-                }
-
-                // TEST: clip step components beforehand
-                double[] minThetaStepComponents = new double[SourceAmount];
-                double[] maxThetaStepComponents = new double[SourceAmount];
-                for (int i = 0; i < SourceAmount; ++i)
-                {
-                    minThetaStepComponents[i] = - Sources[i].Theta;
-                    maxThetaStepComponents[i] = Math.PI - Sources[i].Theta;
-                }
-
-                // Compute the steps
-                for (int i = 0; i < SourceAmount; ++i)
-                {
-                    rhoStepComponents[i] = -descentRate * GradComponentRho(i);
-                    phiStepComponents[i] = -descentRate * GradComponentPhi(i);
-                    thetaStepComponents[i] = -descentRate * GradComponentTheta(i);
-
-                    // Increase normalizer
-                    normalizer += Math.Pow(rhoStepComponents[i], 2);
-                    normalizer += Math.Pow(phiStepComponents[i], 2);
-                    normalizer += Math.Pow(thetaStepComponents[i], 2);
+                    proposedMove[i] = CarthesianPoint.FromPolarCoordinates(-descentRate * GradComponentRho(i), -descentRate * GradComponentPhi(i), -descentRate * GradComponentTheta(i));
 
                     // Diagnostic output
-                    Console.WriteLine($"Step's components for source {i} before normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+                    Console.WriteLine($"Step's initial components (x, y, z) for source {i} are {proposedMove[i].X}, {proposedMove[i].Y}, {proposedMove[i].Z}");
                 }
 
-                // Normalization
-                normalizer = Math.Sqrt(normalizer);
-                for (int i = 0; i < SourceAmount; ++i)
-                {
-                    rhoStepComponents[i] /= normalizer;
-                    phiStepComponents[i] /= normalizer;
-                    thetaStepComponents[i] /= normalizer;
-
-                    // Diagnostic output
-                    Console.WriteLine($"Step's components for source {i} after normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
-                }
-
-
-                // TEST: clip step components after normalization
-                for (int i = 0; i < SourceAmount; ++i)
-                {
-                    rhoStepComponents[i] = Math.Max(Math.Min(rhoStepComponents[i], maxRhoStepComponents[i]), minRhoStepComponents[i]);
-                    thetaStepComponents[i] = Math.Max(Math.Min(thetaStepComponents[i], maxThetaStepComponents[i]), minThetaStepComponents[i]);
-
-                    // Diagnostic output
-                    Console.WriteLine($"Step's components for source {i} after clipping are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
-                }
-
-                //// TEST: renormalize components after clipping
-                //normalizer = 0.0;
-                //for (int i = 0; i < SourceAmount; ++i)
-                //{
-                //    // TEST: renormalize only angles
-                //    normalizer += Math.Pow(rhoStepComponents[i], 2);
-                //    normalizer += Math.Pow(phiStepComponents[i], 2);
-                //    normalizer += Math.Pow(thetaStepComponents[i], 2);
-                //}
-
-                //for (int i = 0; i < SourceAmount; ++i)
-                //{
-                //    // TEST: renormalize only angles
-                //    rhoStepComponents[i] /= normalizer;
-                //    phiStepComponents[i] /= normalizer;
-                //    thetaStepComponents[i] /= normalizer;
-
-                //    // Diagnostic output
-                //    Console.WriteLine($"Step's components for source {i} after second normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
-                //}
-
-
-
-
-                // Make the step
-                //for (int i = 0; i < SourceAmount; ++i)
-                //{
-                //    Sources[i].Rho += rhoStepComponents[i];
-                //    Sources[i].Phi += phiStepComponents[i];
-                //    //Sources[i].Theta += thetaStepComponents[i];
-                //    Sources[i].Theta = Math.Min(Math.PI, Math.Max(0, Sources[i].Theta + thetaStepComponents[i]));  // TEST: just clip theta
-
-                //    // Diagnostic output
-                //    Console.WriteLine($"Source {i}'s coordinates before validation: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
-                //}
-
-                // Make the largest step that improves quality
-
-
+            
+                // Make the initial step
                 double oldTargetValue = TargetFunction();
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Sources[i].Rho += rhoStepComponents[i];
-                    Sources[i].Phi += phiStepComponents[i];
-                    Sources[i].Theta += thetaStepComponents[i];
-                    //Sources[i].Theta = Math.Min(Math.PI, Math.Max(0, Sources[i].Theta + thetaStepComponents[i]));  // TEST: just clip theta
+                    Sources[i] = PointSource.FromCarthesianPoint(CarthesianPoint.FromPolarPoint(oldSources[i]) + proposedMove[i]);
 
                     // Diagnostic output
                     Console.WriteLine($"Source {i}'s coordinates after initial step: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
@@ -254,21 +170,18 @@ namespace Computation
                 while (CoordinatesOutOfBorders() || TargetFunction() > oldTargetValue)
                 {
 
-                    reductionCount += 1;
+                    ++reductionCount;
                     // Diagnostic output
                     Console.WriteLine($"________________________________________Reduction for step {stepCount}: {reductionCount}________________________________________");
-                    Console.WriteLine($"Was out of borders: {CoordinatesOutOfBorders()}, old target value: {oldTargetValue}, new target value: {TargetFunction()}");
+                    Console.WriteLine($"Was out of borders: {CoordinatesOutOfBorders()}, old target value: {oldTargetValue}, new target value: {TargetFunction()}");  // TODO: not safe here
 
                     for (int i = 0; i < SourceAmount; ++i)
                     {
-                        // Diagnostic output
-                        Sources[i].Rho -= stepFraction * rhoStepComponents[i];
-                        Sources[i].Phi -= stepFraction * phiStepComponents[i];
-                        Sources[i].Theta -= stepFraction * thetaStepComponents[i];
-                        //Sources[i].Theta = Math.Min(Math.PI, Math.Max(0, Sources[i].Theta + thetaStepComponents[i]));  // TEST: just clip theta
+                        proposedMove[i] *= stepFraction;
+                        Sources[i] = PointSource.FromCarthesianPoint(CarthesianPoint.FromPolarPoint(oldSources[i]) + proposedMove[i]);
 
                         // Diagnostic output
-                        Console.WriteLine($"Now trying coordinates for source {i}: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                        Console.WriteLine($"Now trying (rho, phi, theta) coordinates for source {i}: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
                     }
                     stepFraction /= 2;
                 }
@@ -276,19 +189,19 @@ namespace Computation
                 // Diagnostic output
                 Console.WriteLine($"________________________________________Final values for step {stepCount} after {reductionCount} reductions________________________________________");
                 Console.WriteLine($"Old target value: {oldTargetValue}, new target value: {TargetFunction()}");
-                
+
                 for (int i = 0; i < SourceAmount; ++i)
                 {
                     Console.WriteLine($"Source {i}'s coordinates: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
                 }
 
-                // The step was made without proper validation, can be non-standard now, so:
+                // The step was made without proper validation, can be non-standard now, so (CAN IT?):
                 ValidateCoordinates();
 
                 // Diagnostic output
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Console.WriteLine($"Source {i}'s coordinates after validation: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                    Console.WriteLine($"Source {i}'s coordinates after (fictional) validation: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
                 }
 
                 // Update statistics
@@ -306,47 +219,270 @@ namespace Computation
                 {
                     return true;
                 }
-
-                // Theta should lie within [0; Pi] segment, but, unlike phi, does not form circular trajectory, we should account for that
-                if (Sources[i].Theta < 0 || Sources[i].Theta > Math.PI)
-                {
-                    return true;
-                }
             }
 
             return false;
         }
 
-        // Method to make sure that the sources' coordinates are within reasonable limits
+        // Method to make sure that the sources' coordinates are within reasonable limits (now not needed)
         void ValidateCoordinates()
         {
-            for (int i = 0; i < SourceAmount; ++i)
-            {
-                // TODO: should we really check this now, after improving steps' logic?
-                // Rho should lie between internal and external spheres' radiuses (the lower boundary is needed because of the gradient's properties)
-                Sources[i].Rho = Math.Max(Math.Min(Sources[i].Rho, BiggestRho), SmallestRho);
-
-                // Phi should lie within [0; 2*Pi) half-open interval
-                Sources[i].Phi = Sources[i].Phi % (2 * Math.PI);
-                if (Sources[i].Phi < 0)
-                {
-                    Sources[i].Phi += 2 * Math.PI;
-                }
-
-
-                // TODO: should we really check this now, after improving steps' logic?
-                // Theta should lie within [0; Pi] segment, but, unlike phi, does not form circular trajectory, we should account for that
-                Sources[i].Theta = Sources[i].Theta % (2 * Math.PI);
-                if (Sources[i].Theta < 0)
-                {
-                    Sources[i].Theta += 2 * Math.PI;
-                }
-                if (Sources[i].Theta > Math.PI)
-                {
-                    Sources[i].Theta = 2 * Math.PI - Sources[i].Theta;
-                }
-            }
         }
+
+
+        //// The main method, finding the sources, including all stages
+        //public void SearchForSources()
+        //{
+        //    double descentRate = 1.0;  // Hyperparameter: how fast should we descend TODO: descent logic should be revised
+        //    int stepCount = 1;  // Statistics for the log
+        //    //PointSource[] sourceCandidates = new PointSource[SourceAmount];
+
+        //    while (TargetFunction() > ErrorMargin)
+        //    {
+        //        // Here goes a single step of the gradient descent
+
+        //        // Diagnostic output
+        //        Console.WriteLine($"\n\n________________________________________Starting step {stepCount}________________________________________");
+
+        //        // First compute the step's components towards the antigradient, then make them
+        //        double[] rhoStepComponents = new double[SourceAmount];
+        //        double[] phiStepComponents = new double[SourceAmount];
+        //        double[] thetaStepComponents = new double[SourceAmount];
+
+        //        // Diagnostic output
+        //        for (int i = 0; i < SourceAmount; ++i)
+        //        {
+        //            Console.WriteLine($"Source {i}'s coordinates before the step: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+        //        }
+
+        //        // Coefficient for gradient normalization
+        //        double normalizer = 0.0;
+
+        //        // Compute the steps
+        //        //for (int i = 0; i < SourceAmount; ++i)
+        //        //{
+        //        //    rhoStepComponents[i] = -descentRate * GradComponentRho(i);
+        //        //    phiStepComponents[i] = -descentRate  * GradComponentPhi(i);
+        //        //    thetaStepComponents[i] = -descentRate * GradComponentTheta(i);
+
+        //        //    // Increase normalizer
+        //        //    normalizer += Math.Pow(rhoStepComponents[i], 2);
+        //        //    normalizer += Math.Pow(phiStepComponents[i], 2);
+        //        //    normalizer += Math.Pow(thetaStepComponents[i], 2);
+
+        //        //    // Diagnostic output
+        //        //    Console.WriteLine($"Step's components for source {i} are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+        //        //}
+
+        //        // TEST: clip step components beforehand
+        //        double[] minRhoStepComponents = new double[SourceAmount];
+        //        double[] maxRhoStepComponents = new double[SourceAmount];
+        //        for (int i = 0; i < SourceAmount; ++i)
+        //        {
+        //            minRhoStepComponents[i] = SmallestRho - Sources[i].Rho;
+        //            maxRhoStepComponents[i] = BiggestRho - Sources[i].Rho;
+        //        }
+
+        //        // TEST: clip step components beforehand
+        //        double[] minThetaStepComponents = new double[SourceAmount];
+        //        double[] maxThetaStepComponents = new double[SourceAmount];
+        //        for (int i = 0; i < SourceAmount; ++i)
+        //        {
+        //            minThetaStepComponents[i] = - Sources[i].Theta;
+        //            maxThetaStepComponents[i] = Math.PI - Sources[i].Theta;
+        //        }
+
+        //        // Compute the steps
+        //        for (int i = 0; i < SourceAmount; ++i)
+        //        {
+        //            rhoStepComponents[i] = -descentRate * GradComponentRho(i);
+        //            phiStepComponents[i] = -descentRate * GradComponentPhi(i);
+        //            thetaStepComponents[i] = -descentRate * GradComponentTheta(i);
+
+        //            // Increase normalizer
+        //            normalizer += Math.Pow(rhoStepComponents[i], 2);
+        //            normalizer += Math.Pow(phiStepComponents[i], 2);
+        //            normalizer += Math.Pow(thetaStepComponents[i], 2);
+
+        //            // Diagnostic output
+        //            Console.WriteLine($"Step's components for source {i} before normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+        //        }
+
+        //        // Normalization
+        //        normalizer = Math.Sqrt(normalizer);
+        //        for (int i = 0; i < SourceAmount; ++i)
+        //        {
+        //            rhoStepComponents[i] /= normalizer;
+        //            phiStepComponents[i] /= normalizer;
+        //            thetaStepComponents[i] /= normalizer;
+
+        //            // Diagnostic output
+        //            Console.WriteLine($"Step's components for source {i} after normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+        //        }
+
+
+        //        // TEST: clip step components after normalization
+        //        for (int i = 0; i < SourceAmount; ++i)
+        //        {
+        //            rhoStepComponents[i] = Math.Max(Math.Min(rhoStepComponents[i], maxRhoStepComponents[i]), minRhoStepComponents[i]);
+        //            thetaStepComponents[i] = Math.Max(Math.Min(thetaStepComponents[i], maxThetaStepComponents[i]), minThetaStepComponents[i]);
+
+        //            // Diagnostic output
+        //            Console.WriteLine($"Step's components for source {i} after clipping are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+        //        }
+
+        //        //// TEST: renormalize components after clipping
+        //        //normalizer = 0.0;
+        //        //for (int i = 0; i < SourceAmount; ++i)
+        //        //{
+        //        //    // TEST: renormalize only angles
+        //        //    normalizer += Math.Pow(rhoStepComponents[i], 2);
+        //        //    normalizer += Math.Pow(phiStepComponents[i], 2);
+        //        //    normalizer += Math.Pow(thetaStepComponents[i], 2);
+        //        //}
+
+        //        //for (int i = 0; i < SourceAmount; ++i)
+        //        //{
+        //        //    // TEST: renormalize only angles
+        //        //    rhoStepComponents[i] /= normalizer;
+        //        //    phiStepComponents[i] /= normalizer;
+        //        //    thetaStepComponents[i] /= normalizer;
+
+        //        //    // Diagnostic output
+        //        //    Console.WriteLine($"Step's components for source {i} after second normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+        //        //}
+
+
+
+
+        //        // Make the step
+        //        //for (int i = 0; i < SourceAmount; ++i)
+        //        //{
+        //        //    Sources[i].Rho += rhoStepComponents[i];
+        //        //    Sources[i].Phi += phiStepComponents[i];
+        //        //    //Sources[i].Theta += thetaStepComponents[i];
+        //        //    Sources[i].Theta = Math.Min(Math.PI, Math.Max(0, Sources[i].Theta + thetaStepComponents[i]));  // TEST: just clip theta
+
+        //        //    // Diagnostic output
+        //        //    Console.WriteLine($"Source {i}'s coordinates before validation: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+        //        //}
+
+        //        // Make the largest step that improves quality
+
+
+        //        double oldTargetValue = TargetFunction();
+        //        for (int i = 0; i < SourceAmount; ++i)
+        //        {
+        //            Sources[i].Rho += rhoStepComponents[i];
+        //            Sources[i].Phi += phiStepComponents[i];
+        //            Sources[i].Theta += thetaStepComponents[i];
+        //            //Sources[i].Theta = Math.Min(Math.PI, Math.Max(0, Sources[i].Theta + thetaStepComponents[i]));  // TEST: just clip theta
+
+        //            // Diagnostic output
+        //            Console.WriteLine($"Source {i}'s coordinates after initial step: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+        //        }
+
+        //        // Diagnostic output
+        //        Console.WriteLine($"________________________________________Starting step reduction________________________________________");
+
+        //        int reductionCount = 0;
+        //        double stepFraction = 0.5;  // If the step will not actually minimize loss, we halve it and try again
+        //        while (CoordinatesOutOfBorders() || TargetFunction() > oldTargetValue)
+        //        {
+
+        //            reductionCount += 1;
+        //            // Diagnostic output
+        //            Console.WriteLine($"________________________________________Reduction for step {stepCount}: {reductionCount}________________________________________");
+        //            Console.WriteLine($"Was out of borders: {CoordinatesOutOfBorders()}, old target value: {oldTargetValue}, new target value: {TargetFunction()}");
+
+        //            for (int i = 0; i < SourceAmount; ++i)
+        //            {
+        //                // Diagnostic output
+        //                Sources[i].Rho -= stepFraction * rhoStepComponents[i];
+        //                Sources[i].Phi -= stepFraction * phiStepComponents[i];
+        //                Sources[i].Theta -= stepFraction * thetaStepComponents[i];
+        //                //Sources[i].Theta = Math.Min(Math.PI, Math.Max(0, Sources[i].Theta + thetaStepComponents[i]));  // TEST: just clip theta
+
+        //                // Diagnostic output
+        //                Console.WriteLine($"Now trying coordinates for source {i}: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+        //            }
+        //            stepFraction /= 2;
+        //        }
+
+        //        // Diagnostic output
+        //        Console.WriteLine($"________________________________________Final values for step {stepCount} after {reductionCount} reductions________________________________________");
+        //        Console.WriteLine($"Old target value: {oldTargetValue}, new target value: {TargetFunction()}");
+
+        //        for (int i = 0; i < SourceAmount; ++i)
+        //        {
+        //            Console.WriteLine($"Source {i}'s coordinates: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+        //        }
+
+        //        // The step was made without proper validation, can be non-standard now, so:
+        //        ValidateCoordinates();
+
+        //        // Diagnostic output
+        //        for (int i = 0; i < SourceAmount; ++i)
+        //        {
+        //            Console.WriteLine($"Source {i}'s coordinates after validation: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+        //        }
+
+        //        // Update statistics
+        //        stepCount += 1;
+        //    }
+        //}
+
+        //// Method to check that the sources' coordinates are within reasonable limits WITHOUT CHANGING THEM
+        //bool CoordinatesOutOfBorders()
+        //{
+        //    for (int i = 0; i < SourceAmount; ++i)
+        //    {
+        //        // Rho should lie between internal and external spheres' radiuses (the lower boundary is needed because of the gradient's properties)
+        //        if (Sources[i].Rho > BiggestRho || Sources[i].Rho < SmallestRho)
+        //        {
+        //            return true;
+        //        }
+
+        //        // Theta should lie within [0; Pi] segment, but, unlike phi, does not form circular trajectory, we should account for that
+        //        if (Sources[i].Theta < 0 || Sources[i].Theta > Math.PI)
+        //        {
+        //            return true;
+        //        }
+        //    }
+
+        //    return false;
+        //}
+
+        //// Method to make sure that the sources' coordinates are within reasonable limits
+        //void ValidateCoordinates()
+        //{
+        //    for (int i = 0; i < SourceAmount; ++i)
+        //    {
+        //        // TODO: should we really check this now, after improving steps' logic?
+        //        // Rho should lie between internal and external spheres' radiuses (the lower boundary is needed because of the gradient's properties)
+        //        Sources[i].Rho = Math.Max(Math.Min(Sources[i].Rho, BiggestRho), SmallestRho);
+
+        //        // Phi should lie within [0; 2*Pi) half-open interval
+        //        Sources[i].Phi = Sources[i].Phi % (2 * Math.PI);
+        //        if (Sources[i].Phi < 0)
+        //        {
+        //            Sources[i].Phi += 2 * Math.PI;
+        //        }
+
+
+        //        // TODO: should we really check this now, after improving steps' logic?
+        //        // Theta should lie within [0; Pi] segment, but, unlike phi, does not form circular trajectory, we should account for that
+        //        Sources[i].Theta = Sources[i].Theta % (2 * Math.PI);
+        //        if (Sources[i].Theta < 0)
+        //        {
+        //            Sources[i].Theta += 2 * Math.PI;
+        //        }
+        //        if (Sources[i].Theta > Math.PI)
+        //        {
+        //            Sources[i].Theta = 2 * Math.PI - Sources[i].Theta;
+        //        }
+        //    }
+        //}
 
         //-----------------------------------------------------------
         // Gradient computation specifics, possibly to become private
