@@ -193,24 +193,26 @@ namespace Computation
                     Trace.WriteLine($"Step's components for source {i} after clipping are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
                 }
 
-                // TEST: renormalize components after clipping
-                normalizer = 0.0;
-                for (int i = 0; i < SourceAmount; ++i)
-                {
-                    normalizer += Math.Pow(rhoStepComponents[i], 2);
-                    normalizer += Math.Pow(phiStepComponents[i], 2);
-                    normalizer += Math.Pow(thetaStepComponents[i], 2);
-                }
+                //// TEST: renormalize components after clipping
+                //normalizer = 0.0;
+                //for (int i = 0; i < SourceAmount; ++i)
+                //{
+                //    // TEST: renormalize only angles
+                //    normalizer += Math.Pow(rhoStepComponents[i], 2);
+                //    normalizer += Math.Pow(phiStepComponents[i], 2);
+                //    normalizer += Math.Pow(thetaStepComponents[i], 2);
+                //}
 
-                for (int i = 0; i < SourceAmount; ++i)
-                {
-                    rhoStepComponents[i] /= normalizer;
-                    phiStepComponents[i] /= normalizer;
-                    thetaStepComponents[i] /= normalizer;
+                //for (int i = 0; i < SourceAmount; ++i)
+                //{
+                //    // TEST: renormalize only angles
+                //    rhoStepComponents[i] /= normalizer;
+                //    phiStepComponents[i] /= normalizer;
+                //    thetaStepComponents[i] /= normalizer;
 
-                    // Diagnostic output
-                    Trace.WriteLine($"Step's components for source {i} after second normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
-                }
+                //    // Diagnostic output
+                //    Trace.WriteLine($"Step's components for source {i} after second normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+                //}
 
 
 
