@@ -36,10 +36,10 @@ namespace Computation
 
             // Setting the hyperparameters TODO: set them from outside
             // IMPORTANT: should be bedore sources' initialization, as the initial coordinates depend on ErrorMargin
-            AzimuthalStep = 1e-3;
+            AzimuthalStep = 1e-2;
             PolarStep = 1e-2;
-            RadiusMargin = Radius - 1e-3;
-            ErrorMargin = 1e-3;
+            RadiusMargin = Radius - 1e-2;
+            ErrorMargin = 1e-2;
 
             if (sources != null)
             {
@@ -104,7 +104,7 @@ namespace Computation
                 // Here goes a single step of the gradient descent
 
                 // Diagnostic output
-                Trace.WriteLine($"==============================================Starting step {stepCount}=======================================================");
+                Trace.WriteLine($"\n____________________________________________Starting step {stepCount}_________________________________________");
 
                 // First compute the step's components towards the antigradient, then make them
                 double[] rhoStepComponents = new double[SourceAmount];
@@ -192,6 +192,28 @@ namespace Computation
                     // Diagnostic output
                     Trace.WriteLine($"Step's components for source {i} after clipping are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
                 }
+
+                // TEST: renormalize components after clipping
+                normalizer = 0.0;
+                for (int i = 0; i < SourceAmount; ++i)
+                {
+                    normalizer += Math.Pow(rhoStepComponents[i], 2);
+                    normalizer += Math.Pow(phiStepComponents[i], 2);
+                    normalizer += Math.Pow(thetaStepComponents[i], 2);
+                }
+
+                for (int i = 0; i < SourceAmount; ++i)
+                {
+                    rhoStepComponents[i] /= normalizer;
+                    phiStepComponents[i] /= normalizer;
+                    thetaStepComponents[i] /= normalizer;
+
+                    // Diagnostic output
+                    Trace.WriteLine($"Step's components for source {i} after second normalization are {rhoStepComponents[i]}, {phiStepComponents[i]}, {thetaStepComponents[i]}");
+                }
+
+
+
 
                 // Make the step
                 //for (int i = 0; i < SourceAmount; ++i)
