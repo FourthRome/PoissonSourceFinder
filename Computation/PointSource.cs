@@ -49,6 +49,17 @@ namespace Computation
         {
             return Math.Cos(phi - Phi) * Math.Sin(theta) * Math.Sin(Theta) + Math.Cos(theta) * Math.Cos(Theta);
         }
-        
+
+        //---------------
+        // Static methods
+        //---------------
+        PointSource FromCarthesian(CarthesianPoint source)
+        {
+            double rho = Math.Sqrt(Math.Pow(source.X, 2) + Math.Pow(source.Y, 2) + Math.Pow(source.Z, 2));
+            double phi = Math.Atan2(source.Y, source.X);
+            double theta = Math.Acos(source.Z / rho);
+            return new PointSource(rho, phi, theta);
+        }
+
     }
 }
