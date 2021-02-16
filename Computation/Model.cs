@@ -560,7 +560,8 @@ namespace Computation
             {
                 for (int j = 0; j < polCount; ++j)
                 {
-                    result += AzimuthalStep * PolarStep * func(aziRange.Item1 + (i + 0.5) * AzimuthalStep, polRange.Item1 + (j + 0.5) * PolarStep, sourceNumber);
+                    result += AzimuthalStep * Math.Pow(Radius, 2) * (Math.Cos(polRange.Item1 + j * PolarStep) - Math.Cos(polRange.Item1 + (j + 1) * PolarStep))
+                        * func(aziRange.Item1 + (i + 0.5) * AzimuthalStep, polRange.Item1 + (j + 0.5) * PolarStep, sourceNumber);
                 }
             }
 
