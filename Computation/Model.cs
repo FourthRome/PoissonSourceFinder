@@ -37,11 +37,11 @@ namespace Computation
 
             // Setting the hyperparameters TODO: set them from outside
             // IMPORTANT: should be before sources' initialization, as the initial coordinates depend on ErrorMargin
-            AzimuthalStep = 1e-2;
-            PolarStep = 1e-2;
+            AzimuthalStep = 1e-3;
+            PolarStep = 1e-3;
             SmallestRho = 0;
             BiggestRho = Radius - 1e-2;
-            ErrorMargin = 1e-4;
+            ErrorMargin = 1e-8;
 
             if (sources != null)
             {
