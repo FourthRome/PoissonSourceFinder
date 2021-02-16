@@ -41,7 +41,7 @@ namespace Computation
             PolarStep = 1e-2;
             SmallestRho = 0;
             BiggestRho = Radius - 1e-2;
-            ErrorMargin = 1e-3;
+            ErrorMargin = 1e-4;
 
             if (sources != null)
             {
