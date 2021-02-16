@@ -16,10 +16,10 @@ namespace ConsoleTestApp
             //prediction.PolarRanges.Add(new Tuple<double, double>(0.0, Math.PI));
             //prediction.SearchForSources();
 
-            PointSource[] sources = new PointSource[] { new PointSource(0.9, Math.PI + 0.01, Math.PI / 2) };
+            PointSource[] sources = new PointSource[] { new PointSource(0.8, 0.0, Math.PI / 2) };
             Model groundTruth = new Model(1.0, 1, sources);
             Model prediction = new Model(1.0, 1, groundTruthNormalDerivative: groundTruth.NormalDerivative);
-            prediction.AzimuthalRanges.Add(new Tuple<double, double>(0.0, 2 * Math.PI));
+            prediction.AzimuthalRanges.Add(new Tuple<double, double>(0.0, Math.PI));
             prediction.PolarRanges.Add(new Tuple<double, double>(0.0, Math.PI));
             prediction.SearchForSources();
 
