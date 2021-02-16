@@ -44,6 +44,8 @@ namespace Computation
         //---------------
         public static CarthesianPoint FromPolarCoordinates(double rho, double phi, double theta)
         {
+
+            // TODO: not finished
             if (rho < 0)
             {
                 phi = -phi;
@@ -58,8 +60,6 @@ namespace Computation
             }
 
             theta = theta % (2 * Math.PI);
-
-
 
             double x = rho * Math.Cos(phi) * Math.Sin(theta);
             double y = rho * Math.Sin(phi) * Math.Sin(theta);
