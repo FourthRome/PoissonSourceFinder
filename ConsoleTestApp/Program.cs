@@ -19,9 +19,8 @@ namespace ConsoleTestApp
             PointSource[] sources = new PointSource[] { new PointSource(0.8, 0.0, Math.PI / 2) };
             Model groundTruth = new Model(1.0, 1, sources);
             Model prediction = new Model(1.0, 1, groundTruthNormalDerivative: groundTruth.NormalDerivative);
-            prediction.AzimuthalRanges.Add(new Tuple<double, double>(0.0, Math.PI / 2));
-            prediction.AzimuthalRanges.Add(new Tuple<double, double>(3 * Math.PI / 2, 2 * Math.PI));
-            prediction.PolarRanges.Add(new Tuple<double, double>(0.0, Math.PI));
+            prediction.AzimuthalRanges.Add(new Tuple<double, double>(0.0, 2 * Math.PI));
+            prediction.PolarRanges.Add(new Tuple<double, double>(Math.PI / 2, Math.PI));
             prediction.SearchForSources();
 
 
