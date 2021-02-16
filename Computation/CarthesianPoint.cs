@@ -12,6 +12,10 @@ namespace Computation
         public double Y { get; set; }  // Coordinate 2/3
         public double Z { get; set; }  // Coordinate 3/3
 
+        public double Rho { get => Math.Sqrt(SquareNorm()); }
+        public double Phi { get => Math.Atan2(Y, X); }
+        public double Theta { get => Math.Acos(Z / Rho); }
+
         //-------------
         // Constructors
         //-------------
@@ -30,12 +34,33 @@ namespace Computation
             return $"({X},{Y},{Z})";
         }
 
+        public double SquareNorm()
+        {
+            return Math.Pow(X, 2) + Math.Pow(Y, 2) + Math.Pow(Z, 2);
+        }
 
         //---------------
         // Static methods
         //---------------
         public static CarthesianPoint FromPolarCoordinates(double rho, double phi, double theta)
         {
+            if (rho < 0)
+            {
+                phi = -phi;
+                theta = Math.PI - theta;
+                rho = -rho;
+            }
+
+            phi = phi % (2 * Math.PI);
+            if (phi < 0)
+            {
+                phi += 2 * Math.PI;
+            }
+
+            theta = theta % (2 * Math.PI);
+
+
+
             double x = rho * Math.Cos(phi) * Math.Sin(theta);
             double y = rho * Math.Sin(phi) * Math.Sin(theta);
             double z = rho * Math.Cos(theta);
@@ -67,9 +92,14 @@ namespace Computation
             return new CarthesianPoint(a.X * scale, a.Y * scale, a.Z * scale);
         }
 
-        public static CarthesianPoint operator *(double scale, CarthesianPoint a)
+        public static CarthesianPoint operator*(double scale, CarthesianPoint a)
         {
             return a * scale;
+        }
+
+        public static CarthesianPoint operator/(CarthesianPoint a, double scale)
+        {
+            return new CarthesianPoint(a.X / scale, a.Y / scale, a.Z / scale);
         }
     }
 }

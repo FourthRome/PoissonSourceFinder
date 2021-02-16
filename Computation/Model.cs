@@ -142,16 +142,31 @@ namespace Computation
                     Console.WriteLine($"Source {i}'s coordinates before the step: {oldSources[i].Rho}, {oldSources[i].Phi}, {oldSources[i].Theta}");
                 }
 
+                // TEST: normalize the move's components
+                double normalizer = 0.0;
+
                 // Compute the steps towards the antigradient
                 for (int i = 0; i < SourceAmount; ++i)
                 {
                     proposedMove[i] = CarthesianPoint.FromPolarCoordinates(-descentRate * GradComponentRho(i), -descentRate * GradComponentPhi(i), -descentRate * GradComponentTheta(i));
+                    normalizer += proposedMove[i].SquareNorm();
 
                     // Diagnostic output
-                    Console.WriteLine($"Step's initial components (x, y, z) for source {i} are {proposedMove[i].X}, {proposedMove[i].Y}, {proposedMove[i].Z}");
+                    Console.WriteLine($"Step's initial components (x, y, z) for source {i} before normalization are {proposedMove[i].X}, {proposedMove[i].Y}, {proposedMove[i].Z}");
+                    Console.WriteLine($"Step's initial components (rho, phi, theta) for source {i} before normalization are {proposedMove[i].Rho}, {proposedMove[i].Phi}, {proposedMove[i].Theta}");
                 }
 
-            
+                // TEST: Normalization
+                normalizer = Math.Sqrt(normalizer);
+                for (int i = 0; i < SourceAmount; ++i)
+                {
+                    proposedMove[i] /= normalizer;
+
+                    // Diagnostic output
+                    Console.WriteLine($"Step's initial components (x, y, z) for source {i} after normalization are {proposedMove[i].X}, {proposedMove[i].Y}, {proposedMove[i].Z}");
+                    Console.WriteLine($"Step's initial components (rho, phi, theta) for source {i} after normalization are {proposedMove[i].Rho}, {proposedMove[i].Phi}, {proposedMove[i].Theta}");
+                }
+                
                 // Make the initial step
                 double oldTargetValue = TargetFunction();
                 for (int i = 0; i < SourceAmount; ++i)
