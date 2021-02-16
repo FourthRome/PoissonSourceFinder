@@ -37,7 +37,7 @@ namespace Computation
 
             // Setting the hyperparameters TODO: set them from outside
             // IMPORTANT: should be before sources' initialization, as the initial coordinates depend on ErrorMargin
-            AzimuthalStep = 1e-3;
+            AzimuthalStep = 1e-2;
             PolarStep = 1e-2;
             SmallestRho = 0;
             BiggestRho = Radius - 1e-2;
@@ -470,7 +470,7 @@ namespace Computation
             }
             result /= 4 * Math.PI * Radius;
             result += GroundTruthNormalDerivative(phi, theta);
-            result *= Math.Sin(theta);
+            //result *= Math.Sin(theta);  // COMMENTED OUT: probably a mistake
             return result;
         }
 
@@ -489,8 +489,8 @@ namespace Computation
             result *= Math.Pow(rho_i, 2) - Math.Pow(Radius, 2);
             result *= 3 / (2 * Math.PI * Math.Pow(source_i.SquareDistanceFrom(Radius, phi, theta), 2.5));
             result += -rho_i / (Math.PI * Math.Pow(source_i.SquareDistanceFrom(Radius, phi, theta), 1.5));
-            result *= Radius;
-
+            //result *= Radius;  // COMMENTED OUT: probably a mistake
+            result /= Radius;
             return result;
         }
 
@@ -507,7 +507,7 @@ namespace Computation
             double result = (Math.Pow(Radius, 2) - Math.Pow(rho_i, 2)) * rho_i;
             result *= Math.Sin(phi - phi_i) * Math.Sin(theta) * Math.Sin(theta_i);
             result /= Math.Pow(source_i.SquareDistanceFrom(Radius, phi, theta), 2.5);
-            result *= 3 * Math.Pow(Radius, 2) / (2 * Math.PI);
+            result *= 3 / (2 * Math.PI); // COMMENTED OUT R^2: probably a mistake
 
             return result;
         }
@@ -525,7 +525,7 @@ namespace Computation
             double result = (Math.Pow(Radius, 2) - Math.Pow(rho_i, 2)) * rho_i;
             result *= Math.Cos(phi - phi_i) * Math.Sin(theta) * Math.Cos(theta_i) - Math.Cos(theta) * Math.Sin(theta_i);
             result /= Math.Pow(source_i.SquareDistanceFrom(Radius, phi, theta), 2.5);
-            result *= 3 * Math.Pow(Radius, 2) / (2 * Math.PI);
+            result *= 3 / (2 * Math.PI);  // COMMENTED OUT R^2: probably a mistake
 
             return result;
         }
