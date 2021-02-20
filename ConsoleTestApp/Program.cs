@@ -1,14 +1,12 @@
-﻿using System;
-using Computation;
-
-namespace ConsoleTestApp
+﻿namespace ConsoleTestApp
 {
-    class Program
+    using System;
+    using Computation;
+
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main()
         {
-
-
             Point[] sources = new Point[] { new Point(0.7, 2, Math.PI / 4), new Point(0.3, Math.PI, 3 * Math.PI / 8), new Point(0.5, 4, 0) };
             Model groundTruth = new Model(1.0, 3, sources);
             Model prediction = new Model(1.0, 3, groundTruthNormalDerivative: groundTruth.NormalDerivative);
@@ -22,7 +20,6 @@ namespace ConsoleTestApp
             //prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI - 0.02, Math.PI + 0.02));
             //prediction.PolarRanges.Add(new Tuple<double, double>(Math.PI / 4, 3 * Math.PI / 4));
             //prediction.SearchForSources();
-
 
             Console.WriteLine($"\nFinal results:\n");
             int count = 0; // TODO: there was an analog to Python's .enumerate(); find it
@@ -49,7 +46,6 @@ namespace ConsoleTestApp
             }
 
             Console.ReadLine();
-
         }
     }
 }

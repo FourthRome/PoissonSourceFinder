@@ -1,25 +1,29 @@
-﻿using System;
-
-namespace Computation
+﻿namespace Computation
 {
+    using System;
+
     // The intermidiate type for point sources
     public struct CarthesianPoint
     {
         //---------------------------------------------------
-        // Public properties and their backing private fields 
+        // Public properties and their backing private fields
         //---------------------------------------------------
-        public double X { get; set; }  // Coordinate 1/3
-        public double Y { get; set; }  // Coordinate 2/3
-        public double Z { get; set; }  // Coordinate 3/3
+        public double X { get; set; } // Coordinate 1/3
+
+        public double Y { get; set; } // Coordinate 2/3
+
+        public double Z { get; set; } // Coordinate 3/3
 
         public double Rho { get => Math.Sqrt(SquareNorm()); }
+
         public double Phi { get => Math.Atan2(Y, X); }
+
         public double Theta { get => Math.Acos(Z / Rho); }
 
         //-------------
         // Constructors
         //-------------
-        public CarthesianPoint(double x, double y, double z) : this()
+        public CarthesianPoint(double x, double y, double z)
         {
             X = x;
             Y = y;
@@ -44,7 +48,6 @@ namespace Computation
         //---------------
         public static CarthesianPoint FromPolarCoordinates(double rho, double phi, double theta)
         {
-
             // TODO: not finished
             if (rho < 0)
             {
@@ -53,13 +56,13 @@ namespace Computation
                 rho = -rho;
             }
 
-            phi = phi % (2 * Math.PI);
+            phi %= 2 * Math.PI;
             if (phi < 0)
             {
                 phi += 2 * Math.PI;
             }
 
-            theta = theta % (2 * Math.PI);
+            theta %= 2 * Math.PI;
 
             double x = rho * Math.Cos(phi) * Math.Sin(theta);
             double y = rho * Math.Sin(phi) * Math.Sin(theta);
@@ -77,27 +80,27 @@ namespace Computation
             return new CarthesianPoint(-a.X, -a.Y, -a.Z);
         }
 
-        public static CarthesianPoint operator+(CarthesianPoint a, CarthesianPoint b)
+        public static CarthesianPoint operator +(CarthesianPoint a, CarthesianPoint b)
         {
             return new CarthesianPoint(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
         }
 
-        public static CarthesianPoint operator-(CarthesianPoint a, CarthesianPoint b)
+        public static CarthesianPoint operator -(CarthesianPoint a, CarthesianPoint b)
         {
             return new CarthesianPoint(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
         }
 
-        public static CarthesianPoint operator*(CarthesianPoint a, double scale)
+        public static CarthesianPoint operator *(CarthesianPoint a, double scale)
         {
             return new CarthesianPoint(a.X * scale, a.Y * scale, a.Z * scale);
         }
 
-        public static CarthesianPoint operator*(double scale, CarthesianPoint a)
+        public static CarthesianPoint operator *(double scale, CarthesianPoint a)
         {
             return a * scale;
         }
 
-        public static CarthesianPoint operator/(CarthesianPoint a, double scale)
+        public static CarthesianPoint operator /(CarthesianPoint a, double scale)
         {
             return new CarthesianPoint(a.X / scale, a.Y / scale, a.Z / scale);
         }
