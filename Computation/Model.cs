@@ -227,37 +227,6 @@
             return false;
         }
 
-        // Method to make sure that the sources' coordinates are within reasonable limits
-        private void ValidateCoordinates()
-        {
-            for (int i = 0; i < SourceAmount; ++i)
-            {
-                // TODO: should we really check this now, after improving steps' logic?
-                // Rho should lie between internal and external spheres' radiuses (the lower boundary is needed because of the gradient's properties)
-                Sources[i].Rho = Math.Max(Math.Min(Sources[i].Rho, BiggestRho), SmallestRho);
-
-                // Phi should lie within [0; 2*Pi) half-open interval
-                Sources[i].Phi = Sources[i].Phi % (2 * Math.PI);
-                if (Sources[i].Phi < 0)
-                {
-                    Sources[i].Phi += 2 * Math.PI;
-                }
-
-                // TODO: should we really check this now, after improving steps' logic?
-                // Theta should lie within [0; Pi] segment, but, unlike phi, does not form circular trajectory, we should account for that
-                Sources[i].Theta = Sources[i].Theta % (2 * Math.PI);
-                if (Sources[i].Theta < 0)
-                {
-                    Sources[i].Theta += 2 * Math.PI;
-                }
-
-                if (Sources[i].Theta > Math.PI)
-                {
-                    Sources[i].Theta = (2 * Math.PI) - Sources[i].Theta;
-                }
-            }
-        }
-
         //-----------------------------------------------------------
         // Gradient computation specifics, possibly to become private
         //-----------------------------------------------------------
