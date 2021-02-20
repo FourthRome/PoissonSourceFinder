@@ -3,7 +3,7 @@
 namespace Computation
 {
     // One point source of unit magnitude
-    public struct PointSource
+    public class Point
     {
         //---------------------------------------------------
         // Public properties and their backing private fields 
@@ -27,7 +27,7 @@ namespace Computation
         //-------------
         // Constructors
         //-------------
-        public PointSource(double rho, double phi, double theta) : this()
+        public Point(double rho, double phi, double theta)
         {
             Phi = phi;
             Theta = theta;
@@ -88,44 +88,44 @@ namespace Computation
         //---------------
         // Static methods
         //---------------
-        public static PointSource FromCarthesianPoint(CarthesianPoint source)
+        public static Point FromCarthesianPoint(CarthesianPoint source)
         {
             double rho = Math.Sqrt(Math.Pow(source.X, 2) + Math.Pow(source.Y, 2) + Math.Pow(source.Z, 2));
             double phi = Math.Atan2(source.Y, source.X);
             double theta = Math.Acos(source.Z / rho);
-            return new PointSource(rho, phi, theta);
+            return new Point(rho, phi, theta);
         }
 
         // The following operations are non-standard, meant for the phase space
 
-        public static PointSource operator -(PointSource a)
+        public static Point operator -(Point a)
         {
-            return new PointSource(-a.Rho, -a.Phi, -a.Theta);
+            return new Point(-a.Rho, -a.Phi, -a.Theta);
         }
 
-        public static PointSource operator +(PointSource a, PointSource b)
+        public static Point operator +(Point a, Point b)
         {
-            return new PointSource(a.Rho + b.Rho, a.Phi + b.Phi, a.Theta + b.Theta);
+            return new Point(a.Rho + b.Rho, a.Phi + b.Phi, a.Theta + b.Theta);
         }
 
-        public static PointSource operator -(PointSource a, PointSource b)
+        public static Point operator -(Point a, Point b)
         {
-            return new PointSource(a.Rho - b.Rho, a.Phi - b.Phi, a.Theta - b.Theta);
+            return new Point(a.Rho - b.Rho, a.Phi - b.Phi, a.Theta - b.Theta);
         }
 
-        public static PointSource operator *(PointSource a, double scale)
+        public static Point operator *(Point a, double scale)
         {
-            return new PointSource(a.Rho * scale, a.Phi * scale, a.Theta * scale);
+            return new Point(a.Rho * scale, a.Phi * scale, a.Theta * scale);
         }
 
-        public static PointSource operator *(double scale, PointSource a)
+        public static Point operator *(double scale, Point a)
         {
             return a * scale;
         }
 
-        public static PointSource operator /(PointSource a, double scale)
+        public static Point operator /(Point a, double scale)
         {
-            return new PointSource(a.Rho / scale, a.Phi / scale, a.Theta / scale);
+            return new Point(a.Rho / scale, a.Phi / scale, a.Theta / scale);
         }
 
     }
