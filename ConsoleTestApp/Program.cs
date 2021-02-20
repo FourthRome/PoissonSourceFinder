@@ -9,7 +9,7 @@ namespace ConsoleTestApp
         {
 
 
-            PointSource[] sources = new PointSource[] { new PointSource(0.7, 2, Math.PI / 4), new PointSource(0.3, Math.PI, 3 * Math.PI / 8), new PointSource(0.5, 4, 0) };
+            Point[] sources = new Point[] { new Point(0.7, 2, Math.PI / 4), new Point(0.3, Math.PI, 3 * Math.PI / 8), new Point(0.5, 4, 0) };
             Model groundTruth = new Model(1.0, 3, sources);
             Model prediction = new Model(1.0, 3, groundTruthNormalDerivative: groundTruth.NormalDerivative);
             prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI));

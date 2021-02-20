@@ -11,7 +11,7 @@ namespace Computation
         // Public properties
         //------------------
         
-        public PointSource[] Sources { get; set; }  // Candidate sources' coordinates
+        public Point[] Sources { get; set; }  // Candidate sources' coordinates
         public int SourceAmount { get; set; }  // Amount of sources
         public double Radius { get; set; }  // Sphere's radius
         public double BiggestRho { get; set; }  // Upper boundary for sources' coordinates
@@ -26,7 +26,7 @@ namespace Computation
         //-------------
         // Constructors
         //-------------
-        public Model(double radius, int sourceAmount, PointSource[] sources=null, Func<double, double, double> groundTruthNormalDerivative=null)
+        public Model(double radius, int sourceAmount, Point[] sources=null, Func<double, double, double> groundTruthNormalDerivative=null)
         {
             // Plain old initialization
             Radius = radius;
@@ -49,10 +49,10 @@ namespace Computation
             }
             else
             {
-                Sources = new PointSource[SourceAmount];
+                Sources = new Point[SourceAmount];
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Sources[i] = new PointSource(Radius / 2, i * 2 * Math.PI / SourceAmount, Math.PI / 2);  // Outside of the smallest suitable sphere, and spread apart horizontally
+                    Sources[i] = new Point(Radius / 2, i * 2 * Math.PI / SourceAmount, Math.PI / 2);  // Outside of the smallest suitable sphere, and spread apart horizontally
                 }
             }
         }
@@ -252,16 +252,16 @@ namespace Computation
             int stepCount = 1;  // Statistics for the log
             
             // Declare and initialize necessary data structures
-            PointSource[] oldSources = new PointSource[SourceAmount];
+            Point[] oldSources = new Point[SourceAmount];
             for (int i = 0; i < SourceAmount; ++i)
             {
-                oldSources[i] = new PointSource(Sources[i].Rho, Sources[i].Phi, Sources[i].Theta);  // We initialize this just to be safe
+                oldSources[i] = new Point(Sources[i].Rho, Sources[i].Phi, Sources[i].Theta);  // We initialize this just to be safe
             }
 
-            PointSource[] proposedMove = new PointSource[SourceAmount];
+            Point[] proposedMove = new Point[SourceAmount];
             for (int i = 0; i < SourceAmount; ++i)
             {
-                proposedMove[i] = new PointSource(0, 0, 0);  // We initialize this just to be safe
+                proposedMove[i] = new Point(0, 0, 0);  // We initialize this just to be safe
             }
 
             while (TargetFunction() > ErrorMargin)
@@ -291,7 +291,7 @@ namespace Computation
                 // Compute the steps towards the antigradient
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    proposedMove[i] = new PointSource(-descentRate * GradComponentRho(i), -descentRate * GradComponentPhi(i), -descentRate * GradComponentTheta(i));
+                    proposedMove[i] = new Point(-descentRate * GradComponentRho(i), -descentRate * GradComponentPhi(i), -descentRate * GradComponentTheta(i));
                     //normalizer += proposedMove[i].SquareNorm();
 
                     // Diagnostic output
@@ -478,7 +478,7 @@ namespace Computation
         double RhoDerivativeComponent(double phi, double theta, int sourceNumber)
         {
             // Shortcuts
-            PointSource source_i = Sources[sourceNumber];
+            Point source_i = Sources[sourceNumber];
             double rho_i = Sources[sourceNumber].Rho;
             double phi_i = Sources[sourceNumber].Phi;
             double theta_i = Sources[sourceNumber].Theta;
@@ -498,7 +498,7 @@ namespace Computation
         double PhiDerivativeComponent(double phi, double theta, int sourceNumber)
         {
             // Shortcuts
-            PointSource source_i = Sources[sourceNumber];
+            Point source_i = Sources[sourceNumber];
             double rho_i = Sources[sourceNumber].Rho;
             double phi_i = Sources[sourceNumber].Phi;
             double theta_i = Sources[sourceNumber].Theta;
@@ -516,7 +516,7 @@ namespace Computation
         double ThetaDerivativeComponent(double phi, double theta, int sourceNumber)
         {
             // Shortcuts
-            PointSource source_i = Sources[sourceNumber];
+            Point source_i = Sources[sourceNumber];
             double rho_i = Sources[sourceNumber].Rho;
             double phi_i = Sources[sourceNumber].Phi;
             double theta_i = Sources[sourceNumber].Theta;

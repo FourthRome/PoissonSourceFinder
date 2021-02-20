@@ -67,7 +67,7 @@ namespace Computation
             return new CarthesianPoint(x, y, z);
         }
 
-        public static CarthesianPoint FromPolarPoint(PointSource source)
+        public static CarthesianPoint FromPolarPoint(Point source)
         {
             return FromPolarCoordinates(source.Rho, source.Phi, source.Theta);
         }
