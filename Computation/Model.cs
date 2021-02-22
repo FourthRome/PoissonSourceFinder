@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
 
     // Class to hold all the info related to a single computational experiment
     public class Model
@@ -366,13 +367,30 @@
             int polCount = Convert.ToInt32(Math.Floor((polRange.Item2 - polRange.Item1) / PolarStep));
 
             double result = 0.0;
-            for (int i = 0; i < aziCount; ++i)
+            Task<double>[] tasks = new Task<double>[aziCount];
+            for (int col = 0; col < aziCount; ++col)
             {
-                for (int j = 0; j < polCount; ++j)
-                {
-                    result += AzimuthalStep * Math.Pow(Radius, 2) * (Math.Cos(polRange.Item1 + (j * PolarStep)) - Math.Cos(polRange.Item1 + ((j + 1) * PolarStep)))
-                        * func(aziRange.Item1 + ((i + 0.5) * AzimuthalStep), polRange.Item1 + ((j + 0.5) * PolarStep), sourceNumber);
-                }
+                tasks[col] = Task.Factory.StartNew(
+                    objCol =>
+                    {
+                        int i = (int) objCol;
+                        double localResult = 0.0;
+
+                        for (int j = 0; j < polCount; ++j)
+                        {
+                            localResult += AzimuthalStep * Math.Pow(Radius, 2)
+                            * (Math.Cos(polRange.Item1 + (j * PolarStep)) - Math.Cos(polRange.Item1 + ((j + 1) * PolarStep)))
+                            * func(aziRange.Item1 + ((i + 0.5) * AzimuthalStep), polRange.Item1 + ((j + 0.5) * PolarStep), sourceNumber);
+                        }
+
+                        return localResult;
+                    },
+                    col);
+            }
+
+            for (int col = 0; col < aziCount; ++col)
+            {
+                result += tasks[col].Result;
             }
 
             return result;
