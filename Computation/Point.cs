@@ -2,32 +2,71 @@
 {
     using System;
 
-    // One point source of unit magnitude
     public class Point
     {
         //---------------------------------------------------
         // Public properties and their backing private fields
         //---------------------------------------------------
+        public double X { get; set; }
 
-        public double Rho { get; set; } // Coordinate 1/3
+        public double Y { get; set; }
 
-        public double Phi { get; set; } // Coordinate 2/3
+        public double Z { get; set; }
 
-        public double Theta { get; set; } // Coordinate 3/3
+        public double Rho { get => Math.Sqrt(SquareNorm()); }
+
+        public double Phi { get => Math.Atan2(Y, X); }
+
+        public double Theta { get => Math.Acos(Z / Rho); }
 
         //-------------
         // Constructors
         //-------------
-        public Point(double rho, double phi, double theta)
+        public Point(double x, double y, double z)
         {
-            Phi = phi;
-            Theta = theta;
-            Rho = rho;
+            X = x;
+            Y = y;
+            Z = z;
+        }
+
+        public Point(Point other)
+            : this(other.X, other.Y, other.Z)
+        {
+        }
+
+        public Point(SphericalVector positionVec)
+        {
+            if (!positionVec.IsPositionVector)
+            {
+                throw new NotImplementedException("[INCORRECT USAGE] Point can only be initialized with a SphericalVector if it is position vector.");
+            }
+
+            OverwriteWithSphericalPositionVector(positionVec);
         }
 
         //---------------
         // Public methods
         //---------------
+        public override string ToString()
+        {
+            return $"Carthesian: ({X},{Y},{Z}), Spherical: ({Rho}, {Phi}, {Theta})";
+        }
+
+        // Used in normalization and to get Rho
+        public double SquareNorm()
+        {
+            return Math.Pow(X, 2) + Math.Pow(Y, 2) + Math.Pow(Z, 2);
+        }
+
+        // Used when we need to add a vector to the current point, but it is in spherical coordinates
+        public void AddSphericalVector(SphericalVector vec)
+        {
+            double rho = Rho + vec.Rho;
+            double phi = Phi + vec.Phi;
+            double theta = Theta + vec.Theta;
+
+            OverwriteWithSphericalPositionVector(new SphericalVector(rho, phi, theta, makePositionVector: true));
+        }
 
         // Distance to any given point
         public double SquareDistanceFrom(double rho, double phi, double theta)
@@ -35,90 +74,37 @@
             return (Rho * Rho) + (rho * rho) - (2 * Rho * rho * AngleCosBetweenVectors(phi, theta));
         }
 
-        // Part of distance's computation, can be made private
-        public double AngleCosBetweenVectors(double phi, double theta)
+        //----------------------
+        // Public static methods
+        //----------------------
+
+        public static Point operator +(Point point, SphericalVector vec)
+        {
+            Point result = new Point(point);
+            result.AddSphericalVector(vec);
+            return result;
+        }
+
+        //----------------
+        // Private methods
+        //----------------
+        // Part of distance's computation
+        private double AngleCosBetweenVectors(double phi, double theta)
         {
             return (Math.Cos(phi - Phi) * Math.Sin(theta) * Math.Sin(Theta)) + (Math.Cos(theta) * Math.Cos(Theta));
         }
 
-        // To return to standard rho >= 0, phi from 0 to 2Pi, theta from 0 to Pi
-        public void Validate()
+        // To update the Point's coordinates using position vector
+        private void OverwriteWithSphericalPositionVector(SphericalVector vec)
         {
-            if (Rho < 0)
+            if (!vec.IsPositionVector)
             {
-                Rho = -Rho;
-                Phi += Math.PI;
-                Theta = Math.PI - Theta;
+                throw new NotImplementedException("[INCORRECT USAGE] If you want to make a SphericalVector a Point, make sure to normalize it with MakePositional first.");
             }
 
-            Phi %= 2 * Math.PI;
-            if (Phi < 0)
-            {
-                Phi += 2 * Math.PI;
-            }
-
-            Theta %= 2 * Math.PI;
-            if (Theta > Math.PI)
-            {
-                Theta = (2 * Math.PI) - Theta;
-            }
-            else if (Theta < -Math.PI)
-            {
-                Theta = (2 * Math.PI) + Theta;
-            }
-            else if (Theta < 0)
-            {
-                Theta += Math.PI;
-            }
-        }
-
-        // This a non-standard function, meant for the phase space
-        public double SquareNorm()
-        {
-            return Math.Pow(Rho, 2) + Math.Pow(Phi, 2) + Math.Pow(Theta, 2);
-        }
-
-        //---------------
-        // Static methods
-        //---------------
-        public static Point FromCarthesianPoint(CarthesianPoint source)
-        {
-            double rho = Math.Sqrt(Math.Pow(source.X, 2) + Math.Pow(source.Y, 2) + Math.Pow(source.Z, 2));
-            double phi = Math.Atan2(source.Y, source.X);
-            double theta = Math.Acos(source.Z / rho);
-            return new Point(rho, phi, theta);
-        }
-
-        // The following operations are non-standard, meant for the phase space
-
-        public static Point operator -(Point a)
-        {
-            return new Point(-a.Rho, -a.Phi, -a.Theta);
-        }
-
-        public static Point operator +(Point a, Point b)
-        {
-            return new Point(a.Rho + b.Rho, a.Phi + b.Phi, a.Theta + b.Theta);
-        }
-
-        public static Point operator -(Point a, Point b)
-        {
-            return new Point(a.Rho - b.Rho, a.Phi - b.Phi, a.Theta - b.Theta);
-        }
-
-        public static Point operator *(Point a, double scale)
-        {
-            return new Point(a.Rho * scale, a.Phi * scale, a.Theta * scale);
-        }
-
-        public static Point operator *(double scale, Point a)
-        {
-            return a * scale;
-        }
-
-        public static Point operator /(Point a, double scale)
-        {
-            return new Point(a.Rho / scale, a.Phi / scale, a.Theta / scale);
+            X = vec.Rho * Math.Cos(vec.Phi) * Math.Sin(vec.Theta);
+            Y = vec.Rho * Math.Sin(vec.Phi) * Math.Sin(vec.Theta);
+            Z = vec.Rho * Math.Cos(vec.Theta);
         }
     }
 }

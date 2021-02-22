@@ -61,7 +61,8 @@
                 Sources = new Point[SourceAmount];
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Sources[i] = new Point(Radius / 2, i * 2 * Math.PI / SourceAmount, Math.PI / 2);  // Outside of the smallest suitable sphere, and spread apart horizontally
+                    // Outside of the smallest suitable sphere, and spread apart horizontally
+                    Sources[i] = new Point(new SphericalVector(Radius / 2, i * 2 * Math.PI / SourceAmount, Math.PI / 2, makePositionVector: true));
                 }
             }
         }
@@ -89,7 +90,7 @@
         }
 
         //--------------------------------------------------------------------------------------------------------
-        // Minimization problem's internals, possibly to become private (except for the "SearchForSources" method)
+        // Minimization problem's internals, possibly to become private (except for the "SearchForSources" and "TargetFunction" methods)
         //--------------------------------------------------------------------------------------------------------
 
         // Loss function, an integral, to be minimized
@@ -110,18 +111,9 @@
             double descentRate = 1.0;  // Hyperparameter: how fast should we descend TODO: descent logic should be revised
             int stepCount = 1;  // Statistics for the log
 
-            // Declare and initialize necessary data structures
+            // Declare necessary data structures
             Point[] oldSources = new Point[SourceAmount];
-            for (int i = 0; i < SourceAmount; ++i)
-            {
-                oldSources[i] = new Point(Sources[i].Rho, Sources[i].Phi, Sources[i].Theta);  // We initialize this just to be safe
-            }
-
-            Point[] proposedMove = new Point[SourceAmount];
-            for (int i = 0; i < SourceAmount; ++i)
-            {
-                proposedMove[i] = new Point(0, 0, 0);  // We initialize this just to be safe
-            }
+            SphericalVector[] proposedMove = new SphericalVector[SourceAmount];
 
             while (TargetFunction() > ErrorMargin)
             {
@@ -133,15 +125,13 @@
                 // Backup old sources
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    oldSources[i].Rho = Sources[i].Rho;
-                    oldSources[i].Phi = Sources[i].Phi;
-                    oldSources[i].Theta = Sources[i].Theta;
+                    oldSources[i] = Sources[i];
                 }
 
                 // Diagnostic output
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Console.WriteLine($"Source {i}'s coordinates before the step: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                    Console.WriteLine($"Source {i}'s coordinates before the step: {Sources[i]}");
                 }
 
                 // Coefficient for gradient normalization
@@ -150,11 +140,15 @@
                 // Compute the steps towards the antigradient
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    proposedMove[i] = new Point(-descentRate * GradComponentRho(i), -descentRate * GradComponentPhi(i), -descentRate * GradComponentTheta(i));
+                    proposedMove[i] = new SphericalVector(
+                        -descentRate * GradComponentRho(i),
+                        -descentRate * GradComponentPhi(i),
+                        -descentRate * GradComponentTheta(i));
+
                     // normalizer += proposedMove[i].SquareNorm();
 
                     // Diagnostic output
-                    Console.WriteLine($"Step's initial components (rho, phi, theta) for source {i} before normalization are {proposedMove[i].Rho}, {proposedMove[i].Phi}, {proposedMove[i].Theta}");
+                    Console.WriteLine($"Step's initial components for source {i} before normalization are {proposedMove[i]}");
                 }
 
                 // Make the largest step that improves quality
@@ -162,11 +156,10 @@
                 double oldTargetValue = TargetFunction();
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Sources[i] = oldSources[i] + proposedMove[i];
-                    Sources[i].Validate();
+                    Sources[i] = oldSources[i] + SphericalVector.ScaledVersion(proposedMove[i], 1.0);
 
                     // Diagnostic output
-                    Console.WriteLine($"Source {i}'s coordinates after initial step: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                    Console.WriteLine($"Source {i}'s coordinates after initial step: {Sources[i]}");
                 }
 
                 // Diagnostic output
@@ -183,12 +176,11 @@
 
                     for (int i = 0; i < SourceAmount; ++i)
                     {
-                        proposedMove[i] *= stepFraction;
-                        Sources[i] = oldSources[i] + proposedMove[i];
-                        Sources[i].Validate();
+                        Sources[i] = oldSources[i] + SphericalVector.ScaledVersion(proposedMove[i], stepFraction);
+                        stepFraction *= 0.5;
 
                         // Diagnostic output
-                        Console.WriteLine($"Now trying coordinates for source {i}: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                        Console.WriteLine($"Now trying coordinates for source {i}: {Sources[i]}");
                     }
                 }
 
@@ -198,7 +190,7 @@
 
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Console.WriteLine($"Source {i}'s coordinates: {Sources[i].Rho}, {Sources[i].Phi}, {Sources[i].Theta}");
+                    Console.WriteLine($"Source {i}'s coordinates: {Sources[i]}");
                 }
 
                 // Update statistics
