@@ -35,7 +35,7 @@
         //-------------
         // Constructors
         //-------------
-        public Model(double radius, int sourceAmount, Point[] sources = null, Func<double, double, double> groundTruthNormalDerivative = null)
+        public Model(double radius, Point[] sources = null, int sourceAmount = 1, Func<double, double, double> groundTruthNormalDerivative = null)
         {
             // Plain old initialization
             Radius = radius;
@@ -44,17 +44,13 @@
             AzimuthalRanges = new List<Tuple<double, double>>();
             PolarRanges = new List<Tuple<double, double>>();
 
-            // Setting the hyperparameters TODO: set them from outside
-            // IMPORTANT: should be before sources' initialization, as the initial coordinates depend on ErrorMargin
-            AzimuthalStep = 1e-2;
-            PolarStep = 1e-2;
-            SmallestRho = 0;
-            BiggestRho = Radius - 1e-2;
-            ErrorMargin = 1e-2;
+            // TODO: make initialization of all members obligatory
 
+            // Sources initialization
             if (sources != null)
             {
                 Sources = sources;
+                SourceAmount = sources.Length;
             }
             else
             {
@@ -120,7 +116,7 @@
                 // Here goes a single step of the gradient descent
 
                 // Diagnostic output
-                Console.WriteLine($"\n\n________________________________________Starting step {stepCount}________________________________________");
+                Console.WriteLine($"________________________________________Starting step {stepCount}________________________________________");
 
                 // Backup old sources
                 for (int i = 0; i < SourceAmount; ++i)
@@ -131,7 +127,7 @@
                 // Diagnostic output
                 for (int i = 0; i < SourceAmount; ++i)
                 {
-                    Console.WriteLine($"Source {i}'s coordinates before the step: {Sources[i]}");
+                    Console.WriteLine($"\nSource {i}'s coordinates before the step: {Sources[i]}");
                 }
 
                 // Coefficient for gradient normalization
@@ -148,7 +144,7 @@
                     // normalizer += proposedMove[i].SquareNorm();
 
                     // Diagnostic output
-                    Console.WriteLine($"Step's initial components for source {i} before normalization are {proposedMove[i]}");
+                    Console.WriteLine($"\nStep's initial components for source {i} before normalization are {proposedMove[i]}");
                 }
 
                 // Make the largest step that improves quality
@@ -159,11 +155,11 @@
                     Sources[i] = oldSources[i] + SphericalVector.ScaledVersion(proposedMove[i], 1.0);
 
                     // Diagnostic output
-                    Console.WriteLine($"Source {i}'s coordinates after initial step: {Sources[i]}");
+                    Console.WriteLine($"\nSource {i}'s coordinates after initial step: {Sources[i]}");
                 }
 
                 // Diagnostic output
-                Console.WriteLine($"________________________________________Starting step reduction________________________________________");
+                Console.WriteLine($"\n________________________________________Starting step reduction________________________________________");
 
                 int reductionCount = 0;
                 double stepFraction = 0.5;  // If the step will not actually minimize loss, we halve it and try again
@@ -185,13 +181,16 @@
                 }
 
                 // Diagnostic output
-                Console.WriteLine($"________________________________________Final values for step {stepCount} after {reductionCount} reductions________________________________________");
+                Console.WriteLine($"\n________________________________________Final values for step {stepCount} after {reductionCount} reductions________________________________________");
                 Console.WriteLine($"Old target value: {oldTargetValue}, new target value: {TargetFunction()}");
 
                 for (int i = 0; i < SourceAmount; ++i)
                 {
                     Console.WriteLine($"Source {i}'s coordinates: {Sources[i]}");
                 }
+
+                // Diagnostic output
+                Console.WriteLine();
 
                 // Update statistics
                 stepCount += 1;

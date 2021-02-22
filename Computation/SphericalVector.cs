@@ -57,9 +57,9 @@
             return new SphericalVector(-vec.Rho, -vec.Phi, -vec.Theta);
         }
 
-        //----------------
+        //---------------
         // Public methods
-        //----------------
+        //---------------
         public override string ToString()
         {
             return $"({Rho}, phi: {Phi}, theta: {Theta})";
