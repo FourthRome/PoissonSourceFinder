@@ -166,6 +166,15 @@
                 while (CoordinatesOutOfBorders() || TargetFunction() > oldTargetValue)
                 {
                     reductionCount += 1;
+
+                    if (!CoordinatesOutOfBorders() && reductionCount > 20)
+                    {
+                        // Diagnostic output
+                        Console.WriteLine($"#################### Stopping reduction: too many steps #########################");
+                        break;
+                    }
+
+
                     // Diagnostic output
                     Console.WriteLine($"________________________________________Reduction for step {stepCount}: {reductionCount}________________________________________");
                     Console.WriteLine($"Was out of borders: {CoordinatesOutOfBorders()}, old target value: {oldTargetValue}, new target value: {TargetFunction()}");

@@ -22,7 +22,8 @@
             //--------------------
             Point[] sources = new Point[]
             {
-                new Point(new SphericalVector(0.8, 0.0, Math.PI / 2, makePositionVector: true)),
+                new Point(0.5, 0.5, 0),
+                new Point(0.5, -0.5, 0),
             };
             Model groundTruth = new Model(radius, sources);
 
@@ -31,26 +32,33 @@
             //---------------------------------
             Point[] initialSources = new Point[]
             {
-                new Point(new SphericalVector(0.5, 0.0, Math.PI / 2, makePositionVector: true)),
+                //new Point(0.0, 0.5, 0.0),
+                //new Point(0.0, -0.5, 0.0),
+                new Point(0.0, 0.0, 0.5),
+                new Point(0.0, 0.0, -0.5),
             };
 
             //-------------------------------
             // Set up model's hyperparameters
             //-------------------------------
-            Model prediction = new Model(radius, initialSources, groundTruthNormalDerivative: groundTruth.NormalDerivative);
-            // TODO: separate learning process from info about sources
-            prediction.AzimuthalStep = azimuthalStep;
-            prediction.PolarStep = polarStep;
-            prediction.SmallestRho = smallestRho;
-            prediction.BiggestRho = biggestRho;
-            prediction.ErrorMargin = errorMargin;
+            Model prediction = new Model(radius, initialSources, groundTruthNormalDerivative: groundTruth.NormalDerivative)
+            {
+                // TODO: separate learning process from info about sources
+                AzimuthalStep = azimuthalStep,
+                PolarStep = polarStep,
+                SmallestRho = smallestRho,
+                BiggestRho = biggestRho,
+                ErrorMargin = errorMargin,
+            };
 
             //--------------------------------------
             // Set up part of the sphere's surface S
             //--------------------------------------
-            prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, 2 * Math.PI));
+            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, 2 *Math.PI));
+            prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
+            prediction.AzimuthalRanges.Add(new Tuple<double, double>(3 * Math.PI / 2, 2 * Math.PI));
 
-            prediction.PolarRanges.Add(new Tuple<double, double>(Math.PI / 4, 3 * Math.PI / 4));
+            prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
 
             //-------------------------
             // Start prediction process
