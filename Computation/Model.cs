@@ -175,7 +175,6 @@
                         break;
                     }
 
-
                     // Diagnostic output
                     Console.WriteLine($"________________________________________Reduction for step {stepCount}: {reductionCount}________________________________________");
                     Console.WriteLine($"Was out of borders: {CoordinatesOutOfBorders()}, old target value: {oldTargetValue}, new target value: {TargetFunction()}");
@@ -373,7 +372,7 @@
                 tasks[col] = Task.Factory.StartNew(
                     objCol =>
                     {
-                        int i = (int) objCol;
+                        int i = (int)objCol;
                         double localResult = 0.0;
 
                         for (int j = 0; j < polCount; ++j)
