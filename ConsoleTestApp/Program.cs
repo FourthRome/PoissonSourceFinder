@@ -61,13 +61,13 @@
             //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
 
             // Hemisphere x > 0
-            prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
-            prediction.AzimuthalRanges.Add(new Tuple<double, double>(3 * Math.PI / 2, 2 * Math.PI));
-            prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
+            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
+            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(3 * Math.PI / 2, 2 * Math.PI));
+            //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
 
             // Hemisphere x < 0
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI / 2, 3 * Math.PI / 2));
-            //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
+            prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI / 2, 3 * Math.PI / 2));
+            prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
 
             // Hemisphere y > 0
             //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI));
