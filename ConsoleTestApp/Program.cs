@@ -86,12 +86,12 @@
             //prediction.PolarRanges.Add(new Tuple<double, double>(Math.PI / 2, Math.PI));
 
             // Eighth of a sphere x > 0, y > 0, z > 0
-            prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
-            prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
+            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
+            //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
 
             // Eighth of a sphere x < 0, y < 0, z < 0
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI, 3 * Math.PI / 2));
-            //prediction.PolarRanges.Add(new Tuple<double, double>(Math.PI / 2, Math.PI));
+            prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI, 3 * Math.PI / 2));
+            prediction.PolarRanges.Add(new Tuple<double, double>(Math.PI / 2, Math.PI));
 
             //-------------------------
             // Start prediction process
