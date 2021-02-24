@@ -15,7 +15,7 @@
             double polarStep = 1e-2;
             double smallestRho = 0;
             double biggestRho = radius - 1e-2;
-            double errorMargin = 1e-2;
+            double errorMargin = 1e-3;
 
             //--------------------
             // Set up real sources
