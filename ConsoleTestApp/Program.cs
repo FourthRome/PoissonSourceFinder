@@ -11,8 +11,8 @@
             // Provide hyperparameters for the searching process
             //--------------------------------------------------
             double radius = 1.0;
-            double azimuthalStep = 1e-2;
-            double polarStep = 1e-2;
+            double azimuthalStep = 1e-3;
+            double polarStep = 1e-3;
             double smallestRho = 0;
             double biggestRho = radius - 1e-2;
             double errorMargin = 1e-3;
