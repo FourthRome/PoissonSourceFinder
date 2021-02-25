@@ -15,7 +15,7 @@
             double polarStep = 1e-2;
             double smallestRho = 0;
             double biggestRho = radius - 1e-2;
-            double errorMargin = 1e-3;
+            double errorMargin = 1e-2;
 
             //--------------------
             // Set up real sources
@@ -74,8 +74,8 @@
             //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
 
             // Hemisphere y < 0
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI, 2 * Math.PI));
-            //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
+            prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI, 2 * Math.PI));
+            prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
 
             // Hemisphere z > 0
             //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, 2 * Math.PI));
@@ -90,8 +90,8 @@
             //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
 
             // Eighth of a sphere x < 0, y < 0, z < 0
-            prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI, 3 * Math.PI / 2));
-            prediction.PolarRanges.Add(new Tuple<double, double>(Math.PI / 2, Math.PI));
+            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI, 3 * Math.PI / 2));
+            //prediction.PolarRanges.Add(new Tuple<double, double>(Math.PI / 2, Math.PI));
 
             //-------------------------
             // Start prediction process
