@@ -14,7 +14,7 @@
             double azimuthalStep = 1e-2;
             double polarStep = 1e-2;
             double smallestRho = 0;
-            double biggestRho = radius - 1e-2;
+            double biggestRho = radius - 1e-3;
             double errorMargin = 1e-2;
 
             //--------------------
@@ -25,7 +25,7 @@
                 //new Point(0.5, 0.5, 0),
                 //new Point(0.6, -0.6, 0),
                 new Point(0.7, 0.7, 0),
-                new Point(0.8, -0.8, 0),
+                new Point(0.8, -0.59, 0),
             };
             Model groundTruth = new Model(radius, sources);
 
