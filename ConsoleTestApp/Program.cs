@@ -22,10 +22,12 @@
             //--------------------
             Point[] sources = new Point[]
             {
-                new Point(0.5, 0.5, 0),
-                new Point(0.6, -0.6, 0),
+                //new Point(0.5, 0.5, 0),
+                //new Point(0.6, -0.6, 0),
                 //new Point(0.7, 0.7, 0),
                 //new Point(0.8, -0.59, 0),
+                new Point(0.4, 0.3, 0.1),
+                new Point(0.3, -0.4, 0),
             };
             Model groundTruth = new Model(radius, sources);
 
@@ -36,8 +38,8 @@
             {
                 //new Point(0.3, 0.4, 0.1),
                 //new Point(0.4, -0.4, -0.1),
-                new Point(0.2, 0.3, 0.2),
-                new Point(0.3, -0.3, -0.2),
+                new Point(0.1, 0, -0.3),
+                new Point(0.7, 0.2, 0.5),
             };
 
             //-------------------------------
@@ -57,8 +59,8 @@
             // Set up part of the sphere's surface S
             //--------------------------------------
             // Full sphere
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, 2 * Math.PI));
-            //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
+            prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, 2 * Math.PI));
+            prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
 
             // Hemisphere x > 0
             //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
@@ -70,8 +72,8 @@
             //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
 
             // Hemisphere y > 0
-            prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI));
-            prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
+            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI));
+            //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
 
             // Hemisphere y < 0
             //prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI, 2 * Math.PI));
