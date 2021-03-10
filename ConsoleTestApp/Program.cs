@@ -22,12 +22,15 @@
             //--------------------
             Point[] sources = new Point[]
             {
-                new Point(0.5, 0.5, 0),
-                new Point(0.6, -0.6, 0),
+                //new Point(0.5, 0.5, 0),
+                //new Point(0.6, -0.6, 0),
                 //new Point(0.7, 0.7, 0),
                 //new Point(0.8, -0.59, 0),
                 //new Point(0.4, 0.3, 0.1),
                 //new Point(0.3, -0.4, 0),
+                new Point(0.4, 0.2, 0.1),
+                new Point(-0.7, 0.25, 0.5),
+                new Point(0.1, -0.2, -0.3),
             };
             Model groundTruth = new Model(radius, sources);
 
@@ -42,8 +45,11 @@
                 //new Point(0.7, 0.2, 0.5),
                 //new Point(-0.4, 0.2, 0.6),
                 //new Point(-0.5, -0.3, -0.1),
-                new Point(-0.1, 0.7, 0.3),
-                new Point(-0.9, -0.3, 0.1),
+                //new Point(-0.1, 0.7, 0.3),
+                //new Point(-0.9, -0.3, 0.1),
+                new Point(0.2, 0.5, 0.4),
+                new Point(-0.8, 0.1, 0.3),
+                new Point(-0.1, -0.3, 0),
             };
 
             //-------------------------------
