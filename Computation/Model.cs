@@ -10,40 +10,21 @@
         //------------------
         // Public properties
         //------------------
-
-        public Point[] Sources { get; set; } // Candidate sources' coordinates
-
-        public int SourceAmount { get; set; } // Amount of sources
-
-        public double Radius { get; set; } // Sphere's radius
-
         public double BiggestRho { get; set; } // Upper boundary for sources' coordinates
 
         public double SmallestRho { get; set; } // Lower boundary for sources' coordinates
 
-        public List<Tuple<double, double>> AzimuthalRanges { get; set; } // Part of the sphere surface we'll be processing
-
-        public List<Tuple<double, double>> PolarRanges { get; set; } // Same here
-
         public Func<double, double, double> GroundTruthNormalDerivative { get; set; } // Loss function uses it
-
-        public double AzimuthalStep { get; set; } // Hyperparameter: width of the grid cell for integral computation
-
-        public double PolarStep { get; set; } // Hyperparameter: height of the grid cell for integral computation
 
         public double ErrorMargin { get; set; } // When to stop minimizing loss function; also the lower boundary for sources' coordinates TODO: use a separate member for the latter (maybe)
 
         //-------------
         // Constructors
         //-------------
-        public Model(double radius, Point[] sources = null, int sourceAmount = 1, Func<double, double, double> groundTruthNormalDerivative = null)
+        public Model(Point[] sources = null, Func<double, double, double> groundTruthNormalDerivative)
         {
             // Plain old initialization
-            Radius = radius;
-            SourceAmount = sourceAmount;
             GroundTruthNormalDerivative = groundTruthNormalDerivative;
-            AzimuthalRanges = new List<Tuple<double, double>>();
-            PolarRanges = new List<Tuple<double, double>>();
 
             // TODO: make initialization of all members obligatory
 
@@ -51,7 +32,6 @@
             if (sources != null)
             {
                 Sources = sources;
-                SourceAmount = sources.Length;
             }
             else
             {
@@ -72,19 +52,7 @@
         // Current state statistics, to be public
         //---------------------------------------
 
-        // Finds potential's normal derivative at given coordinates
-        public double NormalDerivative(double phi, double theta)
-        {
-            double result = 0;
-            for (int i = 0; i < SourceAmount; ++i)
-            {
-                double temp = Math.Pow(Sources[i].Rho, 2) - Math.Pow(Radius, 2);
-                temp /= Math.Pow(Sources[i].SquareDistanceFrom(Radius, phi, theta), 1.5);
-                result += temp;
-            }
-
-            return result / (4 * Math.PI * Radius);
-        }
+        
 
         //--------------------------------------------------------------------------------------------------------
         // Minimization problem's internals, possibly to become private (except for the "SearchForSources" and "TargetFunction" methods)
@@ -148,7 +116,7 @@
                     Console.WriteLine($"\nStep's initial components for source {i} before normalization are {proposedMove[i]}");
                 }
 
-                // Make the largest step that improves quality
+                // Make the largest step that improves quality  // TODO: it's not the largest yet
                 // Initial step
                 double oldTargetValue = TargetFunction();
                 for (int i = 0; i < SourceAmount; ++i)
@@ -250,41 +218,41 @@
         }
 
         // Component of the loss function's gradient, to be integrated, 1/3
-        private double LocalGradComponentRho(double phi, double theta, int sourceNumber)
+        private double LocalGradComponentRho(double rho, double phi, double theta, int sourceNumber)
         {
-            return CommonDerivativeComponent(phi, theta) * RhoDerivativeComponent(phi, theta, sourceNumber);
+            return CommonDerivativeComponent(rho, phi, theta) * RhoDerivativeComponent(rho, phi, theta, sourceNumber);
         }
 
         // Component of the loss function's gradient, to be integrated, 2/3
-        private double LocalGradComponentPhi(double phi, double theta, int sourceNumber)
+        private double LocalGradComponentPhi(double rho, double phi, double theta, int sourceNumber)
         {
-            return CommonDerivativeComponent(phi, theta) * PhiDerivativeComponent(phi, theta, sourceNumber);
+            return CommonDerivativeComponent(rho, phi, theta) * PhiDerivativeComponent(rho, phi, theta, sourceNumber);
         }
 
         // Component of the loss function's gradient, to be integrated, 3/3
-        private double LocalGradComponentTheta(double phi, double theta, int sourceNumber)
+        private double LocalGradComponentTheta(double rho, double phi, double theta, int sourceNumber)
         {
-            return CommonDerivativeComponent(phi, theta) * ThetaDerivativeComponent(phi, theta, sourceNumber);
+            return CommonDerivativeComponent(rho, phi, theta) * ThetaDerivativeComponent(rho, phi, theta, sourceNumber);
         }
 
         // Component of component of the loss function's gradient, 1/4
-        private double CommonDerivativeComponent(double phi, double theta)
+        private double CommonDerivativeComponent(double rho, double phi, double theta) // TODO: check the safety of the code for arbitrary coordinates
         {
             double result = 0.0;
 
             for (int i = 0; i < SourceAmount; ++i)
             {
-                result += (Math.Pow(Radius, 2) - Math.Pow(Sources[i].Rho, 2)) / Math.Pow(Sources[i].SquareDistanceFrom(Radius, phi, theta), 1.5);
+                result += (Math.Pow(rho, 2) - Math.Pow(Sources[i].Rho, 2)) / Math.Pow(Sources[i].SquareDistanceFrom(rho, phi, theta), 1.5);
             }
 
-            result /= 4 * Math.PI * Radius;
+            result /= 4 * Math.PI * rho;
             result += GroundTruthNormalDerivative(phi, theta);
             // result *= Math.Sin(theta);  // COMMENTED OUT: probably a mistake
             return result;
         }
 
         // Component of component of the loss function's gradient, 2/4
-        private double RhoDerivativeComponent(double phi, double theta, int sourceNumber)
+        private double RhoDerivativeComponent(double rho, double phi, double theta, int sourceNumber) // TODO: check the safety of the code for arbitrary coordinates
         {
             // Shortcuts
             Point source_i = Sources[sourceNumber];
@@ -294,17 +262,17 @@
 
             // Computation
             double result = (Math.Cos(phi - phi_i) * Math.Sin(theta) * Math.Sin(theta_i)) + (Math.Cos(theta) * Math.Cos(theta_i));
-            result = rho_i - (Radius * result);
-            result *= Math.Pow(rho_i, 2) - Math.Pow(Radius, 2);
-            result *= 3 / (2 * Math.PI * Math.Pow(source_i.SquareDistanceFrom(Radius, phi, theta), 2.5));
-            result += -rho_i / (Math.PI * Math.Pow(source_i.SquareDistanceFrom(Radius, phi, theta), 1.5));
+            result = rho_i - (rho * result);
+            result *= Math.Pow(rho_i, 2) - Math.Pow(rho, 2);
+            result *= 3 / (2 * Math.PI * Math.Pow(source_i.SquareDistanceFrom(rho, phi, theta), 2.5));
+            result += -rho_i / (Math.PI * Math.Pow(source_i.SquareDistanceFrom(rho, phi, theta), 1.5));
             // result *= Radius;  // COMMENTED OUT: probably a mistake
-            result /= Radius;
+            result /= rho;
             return result;
         }
 
         // Component of component of the loss function's gradient, 3/4
-        private double PhiDerivativeComponent(double phi, double theta, int sourceNumber)
+        private double PhiDerivativeComponent(double rho, double phi, double theta, int sourceNumber) // TODO: check the safety of the code for arbitrary coordinates
         {
             // Shortcuts
             Point source_i = Sources[sourceNumber];
@@ -313,16 +281,16 @@
             double theta_i = Sources[sourceNumber].Theta;
 
             // Computation
-            double result = (Math.Pow(Radius, 2) - Math.Pow(rho_i, 2)) * rho_i;
+            double result = (Math.Pow(rho, 2) - Math.Pow(rho_i, 2)) * rho_i;
             result *= Math.Sin(phi - phi_i) * Math.Sin(theta) * Math.Sin(theta_i);
-            result /= Math.Pow(source_i.SquareDistanceFrom(Radius, phi, theta), 2.5);
+            result /= Math.Pow(source_i.SquareDistanceFrom(rho, phi, theta), 2.5);
             result *= 3 / (2 * Math.PI); // COMMENTED OUT R^2: probably a mistake
 
             return result;
         }
 
         // Component of component of the loss function's gradient, 4/4
-        private double ThetaDerivativeComponent(double phi, double theta, int sourceNumber)
+        private double ThetaDerivativeComponent(double rho, double phi, double theta, int sourceNumber) // TODO: check the safety of the code for arbitrary coordinates
         {
             // Shortcuts
             Point source_i = Sources[sourceNumber];
@@ -331,68 +299,14 @@
             double theta_i = Sources[sourceNumber].Theta;
 
             // Computation
-            double result = (Math.Pow(Radius, 2) - Math.Pow(rho_i, 2)) * rho_i;
+            double result = (Math.Pow(rho, 2) - Math.Pow(rho_i, 2)) * rho_i;
             result *= (Math.Cos(phi - phi_i) * Math.Sin(theta) * Math.Cos(theta_i)) - (Math.Cos(theta) * Math.Sin(theta_i));
-            result /= Math.Pow(source_i.SquareDistanceFrom(Radius, phi, theta), 2.5);
+            result /= Math.Pow(source_i.SquareDistanceFrom(rho, phi, theta), 2.5);
             result *= 3 / (2 * Math.PI);  // COMMENTED OUT R^2: probably a mistake
 
             return result;
         }
 
-        //---------------------------------------------------------
-        // Integral computation methods, possibly to become private
-        //---------------------------------------------------------
-
-        // General method for integrals' computation, sum of integrals over all areas
-        private double IntegralOverSurface(Func<double, double, int, double> func, int sourceNumber = -1)
-        {
-            double result = 0.0;
-            foreach (var aziRange in AzimuthalRanges)
-            {
-                foreach (var polRange in PolarRanges)
-                {
-                    result += IntegralOverRectangularArea(func, aziRange, polRange, sourceNumber);
-                }
-            }
-
-            return result;
-        }
-
-        // General method for integrals' computation over one area
-        private double IntegralOverRectangularArea(Func<double, double, int, double> func, Tuple<double, double> aziRange, Tuple<double, double> polRange, int sourceNumber = -1)
-        {
-            // How many points should the grid consist of
-            int aziCount = Convert.ToInt32(Math.Floor((aziRange.Item2 - aziRange.Item1) / AzimuthalStep));
-            int polCount = Convert.ToInt32(Math.Floor((polRange.Item2 - polRange.Item1) / PolarStep));
-
-            double result = 0.0;
-            Task<double>[] tasks = new Task<double>[aziCount];
-            for (int col = 0; col < aziCount; ++col)
-            {
-                tasks[col] = Task.Factory.StartNew(
-                    objCol =>
-                    {
-                        int i = (int)objCol;
-                        double localResult = 0.0;
-
-                        for (int j = 0; j < polCount; ++j)
-                        {
-                            localResult += AzimuthalStep * Math.Pow(Radius, 2)
-                            * (Math.Cos(polRange.Item1 + (j * PolarStep)) - Math.Cos(polRange.Item1 + ((j + 1) * PolarStep)))
-                            * func(aziRange.Item1 + ((i + 0.5) * AzimuthalStep), polRange.Item1 + ((j + 0.5) * PolarStep), sourceNumber);
-                        }
-
-                        return localResult;
-                    },
-                    col);
-            }
-
-            for (int col = 0; col < aziCount; ++col)
-            {
-                result += tasks[col].Result;
-            }
-
-            return result;
-        }
+        
     }
 }
