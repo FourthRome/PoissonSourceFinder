@@ -74,44 +74,6 @@
             return (Rho * Rho) + (rho * rho) - (2 * Rho * rho * AngleCosBetweenVectors(phi, theta));
         }
 
-        // Component of component of the loss function's gradient, 2/4
-        private double RhoDerivativeComponent(double rho, double phi, double theta) // TODO: check the safety of the code for arbitrary coordinates
-        {
-            // Computation
-            double result = (Math.Cos(phi - Phi) * Math.Sin(theta) * Math.Sin(Theta)) + (Math.Cos(theta) * Math.Cos(Theta));
-            result = Rho - (rho * result);
-            result *= Math.Pow(Rho, 2) - Math.Pow(rho, 2);
-            result *= 3 / (2 * Math.PI * Math.Pow(SquareDistanceFrom(rho, phi, theta), 2.5));
-            result += -Rho / (Math.PI * Math.Pow(SquareDistanceFrom(rho, phi, theta), 1.5));
-            // result *= Radius;  // COMMENTED OUT: probably a mistake
-            result /= rho;
-            return result;
-        }
-
-        // Component of component of the loss function's gradient, 3/4
-        private double PhiDerivativeComponent(double rho, double phi, double theta, int sourceNumber) // TODO: check the safety of the code for arbitrary coordinates
-        {
-            // Computation
-            double result = (Math.Pow(rho, 2) - Math.Pow(Rho, 2)) * Rho;
-            result *= Math.Sin(phi - Phi) * Math.Sin(theta) * Math.Sin(Theta);
-            result /= Math.Pow(SquareDistanceFrom(rho, phi, theta), 2.5);
-            result *= 3 / (2 * Math.PI); // COMMENTED OUT R^2: probably a mistake
-
-            return result;
-        }
-
-        // Component of component of the loss function's gradient, 4/4
-        private double ThetaDerivativeComponent(double rho, double phi, double theta, int sourceNumber) // TODO: check the safety of the code for arbitrary coordinates
-        {
-            // Computation
-            double result = (Math.Pow(rho, 2) - Math.Pow(Rho, 2)) * Rho;
-            result *= (Math.Cos(phi - Phi) * Math.Sin(theta) * Math.Cos(Theta)) - (Math.Cos(theta) * Math.Sin(Theta));
-            result /= Math.Pow(SquareDistanceFrom(rho, phi, theta), 2.5);
-            result *= 3 / (2 * Math.PI);  // COMMENTED OUT R^2: probably a mistake
-
-            return result;
-        }
-
         //----------------------
         // Public static methods
         //----------------------
