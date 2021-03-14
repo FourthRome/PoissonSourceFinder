@@ -70,10 +70,6 @@
             AddPolarRange((begin, end));
         }
 
-        //-----------------------------------------------------------
-        // Integral computation methods, will possibly become private
-        //-----------------------------------------------------------
-
         // General method for integrals' computation, sum of integrals over all areas
         public double IntegralOverSurface(Func<double, double, double, double> func)
         {

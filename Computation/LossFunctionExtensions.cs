@@ -27,52 +27,6 @@
             return result;
         }
 
-        public static Func<double, double, double, double> RhoDerivativeComponentFactory(this SourceGroup group, int sourceNumber)
-        {
-            return (double rho, double phi, double theta) =>
-            {
-                Point source = group.Sources[sourceNumber];
-                double result = (Math.Cos(phi - source.Phi) * Math.Sin(theta) * Math.Sin(source.Theta)) + (Math.Cos(theta) * Math.Cos(source.Theta));
-                result = source.Rho - (rho * result);
-                result *= Math.Pow(source.Rho, 2) - Math.Pow(rho, 2);
-                result *= 3 / (2 * Math.PI * Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5));
-                result += -source.Rho / (Math.PI * Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 1.5));
-                // result *= Radius;  // COMMENTED OUT: probably a mistake
-                result /= rho;
-                return result;
-            };
-        }
-
-        public static Func<double, double, double, double> PhiDerivativeComponentFactory(this SourceGroup group, int sourceNumber)
-        {
-            return (double rho, double phi, double theta) =>
-            {
-                Point source = group.Sources[sourceNumber];
-                // Computation
-                double result = (Math.Pow(rho, 2) - Math.Pow(source.Rho, 2)) * source.Rho;
-                result *= Math.Sin(phi - source.Phi) * Math.Sin(theta) * Math.Sin(source.Theta);
-                result /= Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5);
-                result *= 3 / (2 * Math.PI); // COMMENTED OUT R^2: probably a mistake
-
-                return result;
-            };
-        }
-
-        public static Func<double, double, double, double> ThetaDerivativeComponentFactory(this SourceGroup group, int sourceNumber)
-        {
-            return (double rho, double phi, double theta) =>
-            {
-                Point source = group.Sources[sourceNumber];
-                // Computation
-                double result = (Math.Pow(rho, 2) - Math.Pow(source.Rho, 2)) * source.Rho;
-                result *= (Math.Cos(phi - source.Phi) * Math.Sin(theta) * Math.Cos(source.Theta)) - (Math.Cos(theta) * Math.Sin(source.Theta));
-                result /= Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5);
-                result *= 3 / (2 * Math.PI);  // COMMENTED OUT R^2: probably a mistake
-
-                return result;
-            };
-        }
-
         // Component of the loss function's gradient, an integral, 1/3
         public static double GradComponentRho(
             this SourceGroup group,
@@ -116,6 +70,7 @@
             });
         }
 
+        // Loss function over the specified surface
         public static double TargetFunction(
             this SourceGroup group,
             SphericalSurface surface,
@@ -126,6 +81,55 @@
                 return Math.Pow(groundTruthNormalDerivative(rho, phi, theta) - group.NormalDerivative(rho, phi, theta), 2) *
                     Math.Pow(rho, 2) * Math.Sin(theta);
             });
+        }
+
+        // TODO: cache the factories' returns if it is necessary
+        public static Func<double, double, double, double> RhoDerivativeComponentFactory(this SourceGroup group, int sourceNumber)
+        {
+            return (double rho, double phi, double theta) =>
+            {
+                Point source = group.Sources[sourceNumber];
+                double result = (Math.Cos(phi - source.Phi) * Math.Sin(theta) * Math.Sin(source.Theta)) + (Math.Cos(theta) * Math.Cos(source.Theta));
+                result = source.Rho - (rho * result);
+                result *= Math.Pow(source.Rho, 2) - Math.Pow(rho, 2);
+                result *= 3 / (2 * Math.PI * Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5));
+                result += -source.Rho / (Math.PI * Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 1.5));
+                // result *= Radius;  // COMMENTED OUT: probably a mistake
+                result /= rho;
+                return result;
+            };
+        }
+
+        // TODO: cache the factories' returns if it is necessary
+        public static Func<double, double, double, double> PhiDerivativeComponentFactory(this SourceGroup group, int sourceNumber)
+        {
+            return (double rho, double phi, double theta) =>
+            {
+                Point source = group.Sources[sourceNumber];
+                // Computation
+                double result = (Math.Pow(rho, 2) - Math.Pow(source.Rho, 2)) * source.Rho;
+                result *= Math.Sin(phi - source.Phi) * Math.Sin(theta) * Math.Sin(source.Theta);
+                result /= Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5);
+                result *= 3 / (2 * Math.PI); // COMMENTED OUT R^2: probably a mistake
+
+                return result;
+            };
+        }
+
+        // TODO: cache the factories' returns if it is necessary
+        public static Func<double, double, double, double> ThetaDerivativeComponentFactory(this SourceGroup group, int sourceNumber)
+        {
+            return (double rho, double phi, double theta) =>
+            {
+                Point source = group.Sources[sourceNumber];
+                // Computation
+                double result = (Math.Pow(rho, 2) - Math.Pow(source.Rho, 2)) * source.Rho;
+                result *= (Math.Cos(phi - source.Phi) * Math.Sin(theta) * Math.Cos(source.Theta)) - (Math.Cos(theta) * Math.Sin(source.Theta));
+                result /= Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5);
+                result *= 3 / (2 * Math.PI);  // COMMENTED OUT R^2: probably a mistake
+
+                return result;
+            };
         }
     }
 }

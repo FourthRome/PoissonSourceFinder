@@ -11,12 +11,9 @@
         //------------------
         // Public properties
         //------------------
-
-        // TODO: add indexing semantic
-
         public Point[] Sources { get; set; } // Sources' coordinates
 
-        public int SourceAmount { get => Sources.Length; } // Amount of sources
+        public int SourceAmount { get => Sources.Length; }
 
         //-------------
         // Constructors
@@ -53,17 +50,20 @@
             return result / (4 * Math.PI * rho);
         }
 
+        // IEnumerable details
         IEnumerator IEnumerable.GetEnumerator()
         {
             return (IEnumerator)GetEnumerator();
         }
 
+        // IEnumerable details
         public SourceGroupEnum GetEnumerator()
         {
             return new SourceGroupEnum(Sources);
         }
     }
 
+    // IEnumerable details
     public class SourceGroupEnum : IEnumerator
     {
         private readonly Point[] sources;

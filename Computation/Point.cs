@@ -90,6 +90,7 @@
             return result;
         }
 
+        // This is required for a simplified experiment's data format
         public static implicit operator Point((double, double, double) coords)
         {
             return new Point(coords);

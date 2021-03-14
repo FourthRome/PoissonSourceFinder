@@ -39,25 +39,18 @@
         // Public methods
         //---------------
 
+        // A shortcut for target function based on current model state
         public double TargetFunction()
         {
             return Group.TargetFunction(Surface, GroundTruthNormalDerivative);
         }
-
-        //---------------------------------------
-        // Current state statistics, to be public
-        //---------------------------------------
-
-        //--------------------------------------------------------------------------------------------------------
-        // Minimization problem's internals, possibly to become private (except for the "SearchForSources" and "TargetFunction" methods)
-        //--------------------------------------------------------------------------------------------------------
 
         // The main method, finding the sources, including all stages
         public void SearchForSources()
         {
             double descentRate = 1.0;  // Hyperparameter: how fast should we descend TODO: descent logic should be revised
             int stepCount = 1;  // Statistics for the log
-            int sourceAmount = Group.SourceAmount;
+            int sourceAmount = Group.SourceAmount; // Just an alias
 
             // Declare necessary data structures
             SourceGroup oldSources;
@@ -174,9 +167,5 @@
 
             return false;
         }
-
-        //-----------------------------------------------------------
-        // Gradient computation specifics, possibly to become private
-        //-----------------------------------------------------------
     }
 }
