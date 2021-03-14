@@ -39,7 +39,7 @@
         //-----------------------------------------------------------
 
         // General method for integrals' computation, sum of integrals over all areas
-        private double IntegralOverSurface(Func<double, double, double, double> func)
+        public double IntegralOverSurface(Func<double, double, double, double> func)
         {
             double result = 0.0;
             foreach (var aziRange in AzimuthalRanges)

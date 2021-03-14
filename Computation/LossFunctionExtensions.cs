@@ -7,7 +7,12 @@
     public static class LossFunctionExtensions
     {
         // Component of component of the loss function's gradient, 1/4
-        public static double CommonDerivativeComponent(this SourceGroup group, double rho, double phi, double theta) // TODO: check the safety of the code for arbitrary coordinates
+        public static double CommonDerivativeComponent(
+            this SourceGroup group,
+            double rho,
+            double phi,
+            double theta, 
+            Func<double, double, double, double> groundTruthNormalDerivative) // TODO: check the safety of the code for arbitrary coordinates
         {
             double result = 0.0;
 
@@ -17,47 +22,98 @@
             }
 
             result /= 4 * Math.PI * rho;
-            // result += GroundTruthNormalDerivative(rho, phi, theta); // TODO: This has to be somewhere else!
+            result += groundTruthNormalDerivative(rho, phi, theta);
             // result *= Math.Sin(theta);  // COMMENTED OUT: probably a mistake
             return result;
         }
 
-        // Component of component of the loss function's gradient, 2/4
-        public static double RhoDerivativeComponent(this Point source, double rho, double phi, double theta) // TODO: check the safety of the code for arbitrary coordinates
+        public static Func<double, double, double, double> RhoDerivativeComponentFactory(this SourceGroup group, int sourceNumber)
         {
-            // Computation
-            double result = (Math.Cos(phi - source.Phi) * Math.Sin(theta) * Math.Sin(source.Theta)) + (Math.Cos(theta) * Math.Cos(source.Theta));
-            result = source.Rho - (rho * result);
-            result *= Math.Pow(source.Rho, 2) - Math.Pow(rho, 2);
-            result *= 3 / (2 * Math.PI * Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5));
-            result += -source.Rho / (Math.PI * Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 1.5));
-            // result *= Radius;  // COMMENTED OUT: probably a mistake
-            result /= rho;
-            return result;
+            return (double rho, double phi, double theta) =>
+            {
+                Point source = group.Sources[sourceNumber];
+                double result = (Math.Cos(phi - source.Phi) * Math.Sin(theta) * Math.Sin(source.Theta)) + (Math.Cos(theta) * Math.Cos(source.Theta));
+                result = source.Rho - (rho * result);
+                result *= Math.Pow(source.Rho, 2) - Math.Pow(rho, 2);
+                result *= 3 / (2 * Math.PI * Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5));
+                result += -source.Rho / (Math.PI * Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 1.5));
+                // result *= Radius;  // COMMENTED OUT: probably a mistake
+                result /= rho;
+                return result;
+            };
         }
 
-        // Component of component of the loss function's gradient, 3/4
-        public static double PhiDerivativeComponent(this Point source, double rho, double phi, double theta, int sourceNumber) // TODO: check the safety of the code for arbitrary coordinates
+        public static Func<double, double, double, double> PhiDerivativeComponentFactory(this SourceGroup group, int sourceNumber)
         {
-            // Computation
-            double result = (Math.Pow(rho, 2) - Math.Pow(source.Rho, 2)) * source.Rho;
-            result *= Math.Sin(phi - source.Phi) * Math.Sin(theta) * Math.Sin(source.Theta);
-            result /= Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5);
-            result *= 3 / (2 * Math.PI); // COMMENTED OUT R^2: probably a mistake
+            return (double rho, double phi, double theta) =>
+            {
+                Point source = group.Sources[sourceNumber];
+                // Computation
+                double result = (Math.Pow(rho, 2) - Math.Pow(source.Rho, 2)) * source.Rho;
+                result *= Math.Sin(phi - source.Phi) * Math.Sin(theta) * Math.Sin(source.Theta);
+                result /= Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5);
+                result *= 3 / (2 * Math.PI); // COMMENTED OUT R^2: probably a mistake
 
-            return result;
+                return result;
+
+            };
         }
 
-        // Component of component of the loss function's gradient, 4/4
-        public static double ThetaDerivativeComponent(this Point source, double rho, double phi, double theta, int sourceNumber) // TODO: check the safety of the code for arbitrary coordinates
+        public static Func<double, double, double, double> ThetaDerivativeComponentFactory(this SourceGroup group, int sourceNumber)
         {
-            // Computation
-            double result = (Math.Pow(rho, 2) - Math.Pow(source.Rho, 2)) * source.Rho;
-            result *= (Math.Cos(phi - source.Phi) * Math.Sin(theta) * Math.Cos(source.Theta)) - (Math.Cos(theta) * Math.Sin(source.Theta));
-            result /= Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5);
-            result *= 3 / (2 * Math.PI);  // COMMENTED OUT R^2: probably a mistake
+            return (double rho, double phi, double theta) =>
+            {
+                Point source = group.Sources[sourceNumber];
+                // Computation
+                double result = (Math.Pow(rho, 2) - Math.Pow(source.Rho, 2)) * source.Rho;
+                result *= (Math.Cos(phi - source.Phi) * Math.Sin(theta) * Math.Cos(source.Theta)) - (Math.Cos(theta) * Math.Sin(source.Theta));
+                result /= Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5);
+                result *= 3 / (2 * Math.PI);  // COMMENTED OUT R^2: probably a mistake
 
-            return result;
+                return result;
+            };
+        }
+
+        // Component of the loss function's gradient, an integral, 1/3
+        private static double GradComponentRho(
+            this SourceGroup group,
+            SphericalSurface surface,
+            Func<double, double, double, double> groundTruthNormalDerivative,
+            int sourceNumber)
+        {
+            return surface.IntegralOverSurface((double rho, double phi, double theta) =>
+            {
+                return group.CommonDerivativeComponent(rho, phi, theta, groundTruthNormalDerivative) *
+                    group.RhoDerivativeComponentFactory(sourceNumber)(rho, phi, theta);
+            });
+        }
+
+        // Component of the loss function's gradient, an integral, 2/3
+        private static double GradComponentPhi(
+            this SourceGroup group,
+            SphericalSurface surface,
+            Func<double, double, double, double> groundTruthNormalDerivative,
+            int sourceNumber)
+        {
+            return surface.IntegralOverSurface((double rho, double phi, double theta) =>
+            {
+                return group.CommonDerivativeComponent(rho, phi, theta, groundTruthNormalDerivative) *
+                    group.PhiDerivativeComponentFactory(sourceNumber)(rho, phi, theta);
+            });
+        }
+
+        // Component of the loss function's gradient, an integral, 3/3
+        private static double GradComponentTheta(
+            this SourceGroup group,
+            SphericalSurface surface,
+            Func<double, double, double, double> groundTruthNormalDerivative,
+            int sourceNumber)
+        {
+            return surface.IntegralOverSurface((double rho, double phi, double theta) =>
+            {
+                return group.CommonDerivativeComponent(rho, phi, theta, groundTruthNormalDerivative) *
+                    group.ThetaDerivativeComponentFactory(sourceNumber)(rho, phi, theta);
+            });
         }
     }
 }

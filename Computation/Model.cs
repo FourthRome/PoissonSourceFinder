@@ -52,7 +52,6 @@
         // Current state statistics, to be public
         //---------------------------------------
 
-        
 
         //--------------------------------------------------------------------------------------------------------
         // Minimization problem's internals, possibly to become private (except for the "SearchForSources" and "TargetFunction" methods)
@@ -198,41 +197,5 @@
         //-----------------------------------------------------------
         // Gradient computation specifics, possibly to become private
         //-----------------------------------------------------------
-
-        // Component of the loss function's gradient, an integral, 1/3
-        private double GradComponentRho(int sourceNumber)
-        {
-            return IntegralOverSurface(LocalGradComponentRho, sourceNumber);
-        }
-
-        // Component of the loss function's gradient, an integral, 2/3
-        private double GradComponentPhi(int sourceNumber)
-        {
-            return IntegralOverSurface(LocalGradComponentPhi, sourceNumber);
-        }
-
-        // Component of the loss function's gradient, an integral, 3/3
-        private double GradComponentTheta(int sourceNumber)
-        {
-            return IntegralOverSurface(LocalGradComponentTheta, sourceNumber);
-        }
-
-        // Component of the loss function's gradient, to be integrated, 1/3
-        private double LocalGradComponentRho(double rho, double phi, double theta, int sourceNumber)
-        {
-            return CommonDerivativeComponent(rho, phi, theta) * RhoDerivativeComponent(rho, phi, theta, sourceNumber);
-        }
-
-        // Component of the loss function's gradient, to be integrated, 2/3
-        private double LocalGradComponentPhi(double rho, double phi, double theta, int sourceNumber)
-        {
-            return CommonDerivativeComponent(rho, phi, theta) * PhiDerivativeComponent(rho, phi, theta, sourceNumber);
-        }
-
-        // Component of the loss function's gradient, to be integrated, 3/3
-        private double LocalGradComponentTheta(double rho, double phi, double theta, int sourceNumber)
-        {
-            return CommonDerivativeComponent(rho, phi, theta) * ThetaDerivativeComponent(rho, phi, theta, sourceNumber);
-        }
     }
 }
