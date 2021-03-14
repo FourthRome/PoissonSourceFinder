@@ -1,11 +1,12 @@
 ﻿namespace Computation
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Text;
 
     // Class to abstract away sources' data from learning process
-    public class SourceGroup
+    public class SourceGroup : IEnumerable
     {
         //------------------
         // Public properties
@@ -50,6 +51,62 @@
             }
 
             return result / (4 * Math.PI * rho);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return (IEnumerator)GetEnumerator();
+        }
+
+        public SourceGroupEnum GetEnumerator()
+        {
+            return new SourceGroupEnum(Sources);
+        }
+
+    }
+
+    public class SourceGroupEnum : IEnumerator
+    {
+        private Point[] sources;
+        private int position = -1;
+
+        public SourceGroupEnum(Point[] sources)
+        {
+            this.sources = sources;
+        }
+
+        public bool MoveNext()
+        {
+            position++;
+            return position < sources.Length;
+        }
+
+        public void Reset()
+        {
+            position = -1;
+        }
+
+        object IEnumerator.Current
+        {
+            get
+            {
+                return Current;
+            }
+        }
+
+        public Point Current
+        {
+            get
+            {
+                try
+                {
+                    return sources[position];
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    throw new InvalidOperationException();
+                }
+            }
         }
     }
 }
