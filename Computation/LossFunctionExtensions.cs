@@ -11,7 +11,7 @@
             this SourceGroup group,
             double rho,
             double phi,
-            double theta, 
+            double theta,
             Func<double, double, double, double> groundTruthNormalDerivative) // TODO: check the safety of the code for arbitrary coordinates
         {
             double result = 0.0;
@@ -55,7 +55,6 @@
                 result *= 3 / (2 * Math.PI); // COMMENTED OUT R^2: probably a mistake
 
                 return result;
-
             };
         }
 

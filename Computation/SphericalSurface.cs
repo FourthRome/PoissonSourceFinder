@@ -12,9 +12,9 @@
         //------------------
         public double Radius { get; set; } // Sphere's radius
 
-        public List<Tuple<double, double>> AzimuthalRanges { get; set; } // Phis' range
+        public List<(double, double)> AzimuthalRanges { get; set; } // Phis' range
 
-        public List<Tuple<double, double>> PolarRanges { get; set; } //  Thetas' range
+        public List<(double, double)> PolarRanges { get; set; } //  Thetas' range
 
         public double AzimuthalStep { get; set; } // Hyperparameter: width of the grid cell for integral computation
 
@@ -23,16 +23,52 @@
         //-------------
         // Constructors
         //-------------
-        public SphericalSurface(double radius, List<Tuple<double, double>> azRanges, List<Tuple<double, double>> polRanges)
+        public SphericalSurface(
+            double radius,
+            double aziStep,
+            double polarStep,
+            List<(double, double)> azRanges = null,
+            List<(double, double)> polRanges = null)
         {
             Radius = radius;
+            AzimuthalStep = aziStep;
+            PolarStep = polarStep;
             AzimuthalRanges = azRanges;
             PolarRanges = polRanges;
+
+            if (AzimuthalRanges == null)
+            {
+                AzimuthalRanges = new List<(double, double)>();
+            }
+
+            if (PolarRanges == null)
+            {
+                PolarRanges = new List<(double, double)>();
+            }
         }
 
         //---------------
         // Public methods
         //---------------
+        public void AddAzimuthalRange((double, double) range)
+        {
+            AzimuthalRanges.Add(range);
+        }
+
+        public void AddPolarRange((double, double) range)
+        {
+            PolarRanges.Add(range);
+        }
+
+        public void AddAzimuthalRange(double begin, double end)
+        {
+            AddAzimuthalRange((begin, end));
+        }
+
+        public void AddPolarRange(double begin, double end)
+        {
+            AddPolarRange((begin, end));
+        }
 
         //-----------------------------------------------------------
         // Integral computation methods, will possibly become private
@@ -49,14 +85,15 @@
                     result += IntegralOverRectangularArea(func, aziRange, polRange);
                 }
             }
+
             return result;
         }
 
         // General method for integrals' computation over one area
         private double IntegralOverRectangularArea(
             Func<double, double, double, double> func,
-            Tuple<double, double> aziRange,
-            Tuple<double, double> polRange)
+            (double, double) aziRange,
+            (double, double) polRange)
         {
             // How many points should the grid consist of
             int aziCount = Convert.ToInt32(Math.Floor((aziRange.Item2 - aziRange.Item1) / AzimuthalStep));
@@ -78,6 +115,7 @@
                             * (Math.Cos(polRange.Item1 + (j * PolarStep)) - Math.Cos(polRange.Item1 + ((j + 1) * PolarStep)))
                             * func(Radius, aziRange.Item1 + ((i + 0.5) * AzimuthalStep), polRange.Item1 + ((j + 0.5) * PolarStep));
                         }
+
                         return localResult;
                     },
                     col);

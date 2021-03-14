@@ -33,9 +33,6 @@
             Group = group;
             Surface = surface;
             GroundTruthNormalDerivative = groundTruthNormalDerivative;
-
-            // TODO: make initialization of all members obligatory
-
         }
 
         //---------------
@@ -51,11 +48,9 @@
         // Current state statistics, to be public
         //---------------------------------------
 
-
         //--------------------------------------------------------------------------------------------------------
         // Minimization problem's internals, possibly to become private (except for the "SearchForSources" and "TargetFunction" methods)
         //--------------------------------------------------------------------------------------------------------
-
 
         // The main method, finding the sources, including all stages
         public void SearchForSources()
@@ -65,7 +60,7 @@
             int sourceAmount = Group.SourceAmount;
 
             // Declare necessary data structures
-            SourceGroup oldSources = new SourceGroup(Group);
+            SourceGroup oldSources;
             SphericalVector[] proposedMove = new SphericalVector[sourceAmount];
 
             while (TargetFunction() > ErrorMargin)

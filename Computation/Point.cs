@@ -34,6 +34,11 @@
         {
         }
 
+        public Point((double, double, double) coords)
+            : this(coords.Item1, coords.Item2, coords.Item3)
+        {
+        }
+
         public Point(SphericalVector positionVec)
         {
             if (!positionVec.IsPositionVector)
@@ -83,6 +88,11 @@
             Point result = new Point(point);
             result.AddSphericalVector(vec);
             return result;
+        }
+
+        public static implicit operator Point((double, double, double) coords)
+        {
+            return new Point(coords);
         }
 
         //----------------

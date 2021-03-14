@@ -62,12 +62,11 @@
         {
             return new SourceGroupEnum(Sources);
         }
-
     }
 
     public class SourceGroupEnum : IEnumerator
     {
-        private Point[] sources;
+        private readonly Point[] sources;
         private int position = -1;
 
         public SourceGroupEnum(Point[] sources)
