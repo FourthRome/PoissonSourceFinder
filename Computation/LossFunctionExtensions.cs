@@ -75,12 +75,13 @@
         }
 
         // Component of the loss function's gradient, an integral, 1/3
-        private static double GradComponentRho(
+        public static double GradComponentRho(
             this SourceGroup group,
             SphericalSurface surface,
             Func<double, double, double, double> groundTruthNormalDerivative,
             int sourceNumber)
         {
+            // TODO: do not create new function every time, cache it
             return surface.IntegralOverSurface((double rho, double phi, double theta) =>
             {
                 return group.CommonDerivativeComponent(rho, phi, theta, groundTruthNormalDerivative) *
@@ -89,7 +90,7 @@
         }
 
         // Component of the loss function's gradient, an integral, 2/3
-        private static double GradComponentPhi(
+        public static double GradComponentPhi(
             this SourceGroup group,
             SphericalSurface surface,
             Func<double, double, double, double> groundTruthNormalDerivative,
@@ -103,7 +104,7 @@
         }
 
         // Component of the loss function's gradient, an integral, 3/3
-        private static double GradComponentTheta(
+        public static double GradComponentTheta(
             this SourceGroup group,
             SphericalSurface surface,
             Func<double, double, double, double> groundTruthNormalDerivative,
@@ -113,6 +114,18 @@
             {
                 return group.CommonDerivativeComponent(rho, phi, theta, groundTruthNormalDerivative) *
                     group.ThetaDerivativeComponentFactory(sourceNumber)(rho, phi, theta);
+            });
+        }
+
+        public static double TargetFunction(
+            this SourceGroup group,
+            SphericalSurface surface,
+            Func<double, double, double, double> groundTruthNormalDerivative)
+        {
+            return surface.IntegralOverSurface((double rho, double phi, double theta) =>
+            {
+                return Math.Pow(groundTruthNormalDerivative(rho, phi, theta) - group.NormalDerivative(rho, phi, theta), 2) *
+                    Math.Pow(rho, 2) * Math.Sin(theta);
             });
         }
     }

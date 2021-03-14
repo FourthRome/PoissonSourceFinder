@@ -11,6 +11,8 @@
         // Public properties
         //------------------
 
+        // TODO: add indexing semantic
+
         public Point[] Sources { get; set; } // Sources' coordinates
 
         public int SourceAmount { get => Sources.Length; } // Amount of sources
@@ -21,6 +23,15 @@
         public SourceGroup(Point[] sources = null)
         {
             Sources = sources;
+        }
+
+        public SourceGroup(SourceGroup group)
+        {
+            Sources = new Point[group.SourceAmount];
+            for (int i = 0; i < group.SourceAmount; ++i)
+            {
+                Sources[i] = group.Sources[i];
+            }
         }
 
         //---------------
