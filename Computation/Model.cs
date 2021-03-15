@@ -39,6 +39,11 @@
         // Public methods
         //---------------
 
+        public void FindInitialSources()
+        {
+
+        }
+
         // A shortcut for target function based on current model state
         public double TargetFunction()
         {
