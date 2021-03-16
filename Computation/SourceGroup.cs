@@ -5,8 +5,10 @@
     using System.Collections.Generic;
     using System.Text;
 
+    using Contracts;
+
     // Class to abstract away sources' data from learning process
-    public class SourceGroup : IEnumerable
+    public class SourceGroup : ISourceGroup<Point>, IEnumerable
     {
         //------------------
         // Public properties

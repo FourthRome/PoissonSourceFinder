@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using Computation;
+    using Contracts;
 
     public class Program
     {
@@ -21,7 +22,7 @@
             //--------------------
             // Set up real sources
             //--------------------
-            SourceGroup groundTruth = new SourceGroup(new Point[]
+            SourceGroup groundTruth = new (new Point[]
             {
                 (0.5, 0, 0),
                 (0, 0.5, 0),
@@ -31,17 +32,17 @@
             //---------------------------------
             // Set up initial predicted sources
             //---------------------------------
-            SourceGroup initialSources = new SourceGroup(new Point[]
+            SourceGroup initialSources = new (new Point[]
             {
-                (0.4, 0.1, 0.1),
-                (0.2, 0.4, 0.3),
-                (-0.3, -0.3, 0.3),
+                (0.7, -0.2, -0.1),
+                (-0.3, 0.8, 0.2),
+                (-0.2, -0.1, 0.9),
             });
 
             //--------------------------------------
             // Set up part of the sphere's surface S
             //--------------------------------------
-            SphericalSurface surface = new SphericalSurface(radius, azimuthalStep, polarStep);
+            SphericalSurface surface = new (radius, azimuthalStep, polarStep);
 
             // Full sphere
             surface.AddAzimuthalRange(0.0, 2 * Math.PI);
@@ -83,43 +84,57 @@
             //-------------------------------
             // Set up model's hyperparameters
             //-------------------------------
-            Model prediction = new Model(initialSources, surface, groundTruthNormalDerivative: groundTruth.NormalDerivative)
+            Model model = new (initialSources, surface, groundTruthNormalDerivative: groundTruth.NormalDerivative)
             {
                 SmallestRho = smallestRho,
                 BiggestRho = biggestRho,
                 ErrorMargin = errorMargin,
             };
 
-            //-------------------------
-            // Start prediction process
-            //-------------------------
-            prediction.SearchForSources();
+            //------------------------
+            // Register event handlers
+            //------------------------
+            model.ModelEvent += ModelEventCallback;
+
+            //------------------------
+            // Start inference process
+            //------------------------
+            model.SearchForSources();
 
             //------------------
             // Print the results
             //------------------
             Console.WriteLine($"Final results:");
-            Console.WriteLine($"Model's target value: {prediction.TargetFunction()}");
+            Console.WriteLine();
+            Console.WriteLine($"Model's target value: {model.TargetFunction()}");
+            Console.WriteLine();
 
-            int count = 0; // TODO: there was an analog to Python's .enumerate(); find it
-            Console.WriteLine($"\nSources' calculated coordinates:\n");
-            foreach (var source in prediction.Group.Sources)
-            {
-                Console.WriteLine($"Source {count}: {source}");
-                Console.WriteLine();
-                ++count;
-            }
-
-            count = 0;
-            Console.WriteLine($"\nSources' real coordinates:\n");
+            Console.WriteLine($"Sources' real coordinates:");
             foreach (var source in groundTruth.Sources)
             {
-                Console.WriteLine($"Source {count}: {source}");
-                Console.WriteLine();
-                ++count;
+                Console.WriteLine(source);
+            }
+
+            Console.WriteLine($"Sources' calculated coordinates:");
+            foreach (var source in model.Group.Sources)
+            {
+                Console.WriteLine(source);
             }
 
             Console.ReadLine();
+        }
+
+        public static void ModelEventCallback(object sender, ModelEventArgs<Point> args)
+        {
+            Console.WriteLine(args.Message);
+            if (args.Group != null)
+            {
+                foreach (var source in args.Group)
+                {
+                    Console.WriteLine(source);
+                }
+            }
+            Console.WriteLine();
         }
     }
 }

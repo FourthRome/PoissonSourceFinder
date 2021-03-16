@@ -3,7 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
-
+    using Contracts;
     using LossFunctionExtensions;
 
     // Class to hold all the info related to a single computational experiment
@@ -22,7 +22,14 @@
 
         public SourceGroup Group { get; set; }
 
+        public int SourceAmount { get => Group.SourceAmount; }
+
         public double ErrorMargin { get; set; } // When to stop minimizing loss function; also the lower boundary for sources' coordinates TODO: use a separate member for the latter (maybe)
+
+        // Event with info about inference process
+        public delegate void ModelEventHandler(object sender, ModelEventArgs<Point> args);
+
+        public event ModelEventHandler ModelEvent;
 
         //-------------
         // Constructors
@@ -41,7 +48,6 @@
 
         public void FindInitialSources()
         {
-
         }
 
         // A shortcut for target function based on current model state
@@ -50,49 +56,47 @@
             return Group.TargetFunction(Surface, GroundTruthNormalDerivative);
         }
 
+        public SphericalVector[] ComputeProposedMove()
+        {
+            SphericalVector[] result = new SphericalVector[Group.SourceAmount];
+            for (int i = 0; i < Group.SourceAmount; ++i)
+            {
+                result[i] = new SphericalVector(
+                    -Group.GradComponentRho(Surface, GroundTruthNormalDerivative, i),
+                    -Group.GradComponentPhi(Surface, GroundTruthNormalDerivative, i),
+                    -Group.GradComponentTheta(Surface, GroundTruthNormalDerivative, i));
+            }
+
+            return result;
+        }
+
+        public void InvokeModelEvent(string message, SourceGroup group = null)
+        {
+            OnModelEvent(new ModelEventArgs<Point>(message, group));
+        }
+
         // The main method, finding the sources, including all stages
         public void SearchForSources()
         {
-            double descentRate = 1.0;  // Hyperparameter: how fast should we descend TODO: descent logic should be revised
             int stepCount = 1;  // Statistics for the log
             int sourceAmount = Group.SourceAmount; // Just an alias
 
             // Declare necessary data structures
             SourceGroup oldSources;
-            SphericalVector[] proposedMove = new SphericalVector[sourceAmount];
+            SphericalVector[] proposedMove;
 
             while (TargetFunction() > ErrorMargin)
             {
                 // Here goes a single step of the gradient descent
 
-                // Diagnostic output
-                Console.WriteLine($"________________________________________Starting step {stepCount}________________________________________");
+                InvokeModelEvent($"Starting step {stepCount}"); // Output
 
-                // Backup old sources
-                oldSources = new SourceGroup(Group);
+                oldSources = new SourceGroup(Group); // Backup old sources
 
-                // Diagnostic output
-                for (int i = 0; i < sourceAmount; ++i)
-                {
-                    Console.WriteLine($"\nSource {i}'s coordinates before the step: {Group.Sources[i]}");
-                }
+                InvokeModelEvent($"Sources coordinates before the step"); // Output
+                InvokeModelEvent($"Coordinates", Group);
 
-                // Coefficient for gradient normalization
-                // double normalizer = 0.0;
-
-                // Compute the steps towards the antigradient
-                for (int i = 0; i < sourceAmount; ++i)
-                {
-                    proposedMove[i] = new SphericalVector(
-                        -descentRate * Group.GradComponentRho(Surface, GroundTruthNormalDerivative, i),
-                        -descentRate * Group.GradComponentPhi(Surface, GroundTruthNormalDerivative, i),
-                        -descentRate * Group.GradComponentTheta(Surface, GroundTruthNormalDerivative, i));
-
-                    // normalizer += proposedMove[i].SquareNorm();
-
-                    // Diagnostic output
-                    Console.WriteLine($"\nStep's initial components for source {i} before normalization are {proposedMove[i]}");
-                }
+                proposedMove = ComputeProposedMove(); // Compute the steps towards the antigradient
 
                 // Make the largest step that improves quality  // TODO: it's not the largest yet
                 // Initial step
@@ -100,13 +104,9 @@
                 for (int i = 0; i < sourceAmount; ++i)
                 {
                     Group.Sources[i] = oldSources.Sources[i] + SphericalVector.ScaledVersion(proposedMove[i], 1.0);
-
-                    // Diagnostic output
-                    Console.WriteLine($"\nSource {i}'s coordinates after initial step: {Group.Sources[i]}");
                 }
 
-                // Diagnostic output
-                Console.WriteLine($"\n________________________________________Starting step reduction________________________________________");
+                InvokeModelEvent($"Starting step reduction"); // Output
 
                 int reductionCount = 0;
                 double stepFraction = 0.5;  // If the step will not actually minimize loss, we halve it and try again
@@ -116,40 +116,32 @@
 
                     if (!CoordinatesOutOfBorders() && reductionCount > 20)
                     {
-                        // Diagnostic output
-                        Console.WriteLine($"#################### Stopping reduction: too many steps #########################");
+                        InvokeModelEvent($"Stopping reduction: too many steps"); // Output
                         break;
                     }
-
-                    // Diagnostic output
-                    Console.WriteLine($"________________________________________Reduction for step {stepCount}: {reductionCount}________________________________________");
-                    Console.WriteLine($"Was out of borders: {CoordinatesOutOfBorders()}, old target value: {oldTargetValue}, new target value: {TargetFunction()}");
 
                     for (int i = 0; i < sourceAmount; ++i)
                     {
                         Group.Sources[i] = oldSources.Sources[i] + SphericalVector.ScaledVersion(proposedMove[i], stepFraction);
                         stepFraction *= 0.5;
-
-                        // Diagnostic output
-                        Console.WriteLine($"Now trying coordinates for source {i}: {Group.Sources[i]}");
                     }
                 }
 
-                // Diagnostic output
-                Console.WriteLine($"\n________________________________________Final values for step {stepCount} after {reductionCount} reductions________________________________________");
-                Console.WriteLine($"Old target value: {oldTargetValue}, new target value: {TargetFunction()}");
+                InvokeModelEvent($"Final values for step {stepCount} after {reductionCount} reductions"); // Output
+                InvokeModelEvent($"Old target value: {oldTargetValue}, new target value: {TargetFunction()}");
+                InvokeModelEvent("Coordinates", Group);
 
-                for (int i = 0; i < sourceAmount; ++i)
-                {
-                    Console.WriteLine($"Source {i}'s coordinates: {Group.Sources[i]}");
-                }
-
-                // Diagnostic output
-                Console.WriteLine();
-
-                // Update statistics
-                stepCount += 1;
+                stepCount += 1;  // Update statistics
             }
+        }
+
+        //------------------------------
+        // Protected and private methods
+        //------------------------------
+        protected virtual void OnModelEvent(ModelEventArgs<Point> e)
+        {
+            ModelEventHandler handler = ModelEvent;
+            handler?.Invoke(this, e);
         }
 
         // Method to check that the sources' coordinates are within reasonable limits WITHOUT CHANGING THEM
