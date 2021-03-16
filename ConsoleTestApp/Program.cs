@@ -106,7 +106,7 @@
             //------------------
             Console.WriteLine($"Final results:");
             Console.WriteLine();
-            Console.WriteLine($"Model's target value: {model.TargetFunction()}");
+            Console.WriteLine($"Model's target value: {model.Score}");
             Console.WriteLine();
 
             Console.WriteLine($"Sources' real coordinates:");
@@ -134,6 +134,7 @@
                     Console.WriteLine(source);
                 }
             }
+
             Console.WriteLine();
         }
     }

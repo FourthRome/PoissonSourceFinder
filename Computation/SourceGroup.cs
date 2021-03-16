@@ -13,7 +13,7 @@
         //------------------
         // Public properties
         //------------------
-        public Point[] Sources { get; set; } // Sources' coordinates
+        public Point[] Sources { get; set; } // Sources' coordinates TODO: make SourceGroup immutable
 
         public int SourceAmount { get => Sources.Length; }
 

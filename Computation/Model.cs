@@ -24,7 +24,9 @@
 
         public int SourceAmount { get => Group.SourceAmount; }
 
-        public double ErrorMargin { get; set; } // When to stop minimizing loss function; also the lower boundary for sources' coordinates TODO: use a separate member for the latter (maybe)
+        public double Score { get; private set; }
+
+        public double ErrorMargin { get; set; } // When to stop minimizing loss function
 
         // Event with info about inference process
         public delegate void ModelEventHandler(object sender, ModelEventArgs<Point> args);
@@ -45,18 +47,22 @@
         //---------------
         // Public methods
         //---------------
+        public void InvokeModelEvent(string message, SourceGroup group = null)
+        {
+            OnModelEvent(new ModelEventArgs<Point>(message, group));
+        }
 
         public void FindInitialSources()
         {
         }
 
         // A shortcut for target function based on current model state
-        public double TargetFunction()
+        public double TargetFunction(SourceGroup group)
         {
-            return Group.TargetFunction(Surface, GroundTruthNormalDerivative);
+            return group.TargetFunction(Surface, GroundTruthNormalDerivative);
         }
 
-        public SphericalVector[] ComputeProposedMove()
+        public SphericalVector[] GetMoveFromAntigradient()
         {
             SphericalVector[] result = new SphericalVector[Group.SourceAmount];
             for (int i = 0; i < Group.SourceAmount; ++i)
@@ -70,68 +76,76 @@
             return result;
         }
 
-        public void InvokeModelEvent(string message, SourceGroup group = null)
+        public SourceGroup GetMoveResult(SphericalVector[] move, double scale)
         {
-            OnModelEvent(new ModelEventArgs<Point>(message, group));
+            Point[] result = new Point[SourceAmount];
+            for (int i = 0; i < SourceAmount; ++i)
+            {
+                result[i] = Group.Sources[i] + SphericalVector.ScaledVersion(move[i], scale);
+            }
+
+            return new SourceGroup(result);
+        }
+
+        public (SourceGroup, double, int) GetBestMove(SphericalVector[] move, double scoreToBeat)
+        {
+            int reductionCount = 0;
+            double stepFraction = 1.0;
+            SourceGroup candidate = GetMoveResult(move, stepFraction);
+            double score = TargetFunction(candidate);
+
+            InvokeModelEvent($"Starting step reduction"); // Output
+            while (OutOfBorders(candidate) || score > scoreToBeat)
+            {
+                if (!OutOfBorders(candidate))
+                {
+                    reductionCount += 1;
+                }
+
+                if (reductionCount > 20)
+                {
+                    InvokeModelEvent($"Stopping reduction: too many steps"); // Output
+                    break;
+                }
+
+                stepFraction *= 0.5; // If the step will not actually minimize loss, we halve it and try again
+                candidate = GetMoveResult(move, stepFraction);
+                score = TargetFunction(candidate);
+            }
+
+            return (candidate, score, reductionCount);
         }
 
         // The main method, finding the sources, including all stages
         public void SearchForSources()
         {
-            int stepCount = 1;  // Statistics for the log
-            int sourceAmount = Group.SourceAmount; // Just an alias
+            int stepCount = 0;
 
             // Declare necessary data structures
-            SourceGroup oldSources;
+            SourceGroup candidate;
             SphericalVector[] proposedMove;
+            double score = TargetFunction(Group);
 
-            while (TargetFunction() > ErrorMargin)
+            while (score > ErrorMargin)
             {
-                // Here goes a single step of the gradient descent
+                stepCount += 1;
 
                 InvokeModelEvent($"Starting step {stepCount}"); // Output
-
-                oldSources = new SourceGroup(Group); // Backup old sources
-
-                InvokeModelEvent($"Sources coordinates before the step"); // Output
+                InvokeModelEvent($"Sources coordinates before the step");
                 InvokeModelEvent($"Coordinates", Group);
 
-                proposedMove = ComputeProposedMove(); // Compute the steps towards the antigradient
+                proposedMove = GetMoveFromAntigradient();
 
-                // Make the largest step that improves quality  // TODO: it's not the largest yet
-                // Initial step
-                double oldTargetValue = TargetFunction();
-                for (int i = 0; i < sourceAmount; ++i)
-                {
-                    Group.Sources[i] = oldSources.Sources[i] + SphericalVector.ScaledVersion(proposedMove[i], 1.0);
-                }
+                int reductionCount;
+                double scoreToBeat = TargetFunction(Group);
+                (candidate, score, reductionCount) = GetBestMove(proposedMove, scoreToBeat);
 
-                InvokeModelEvent($"Starting step reduction"); // Output
-
-                int reductionCount = 0;
-                double stepFraction = 0.5;  // If the step will not actually minimize loss, we halve it and try again
-                while (CoordinatesOutOfBorders() || TargetFunction() > oldTargetValue)
-                {
-                    reductionCount += 1;
-
-                    if (!CoordinatesOutOfBorders() && reductionCount > 20)
-                    {
-                        InvokeModelEvent($"Stopping reduction: too many steps"); // Output
-                        break;
-                    }
-
-                    for (int i = 0; i < sourceAmount; ++i)
-                    {
-                        Group.Sources[i] = oldSources.Sources[i] + SphericalVector.ScaledVersion(proposedMove[i], stepFraction);
-                        stepFraction *= 0.5;
-                    }
-                }
+                Group = candidate; // TODO: don't just move towards antigradient, choose
+                Score = score;
 
                 InvokeModelEvent($"Final values for step {stepCount} after {reductionCount} reductions"); // Output
-                InvokeModelEvent($"Old target value: {oldTargetValue}, new target value: {TargetFunction()}");
+                InvokeModelEvent($"Old target value: {scoreToBeat}, new target value: {score}");
                 InvokeModelEvent("Coordinates", Group);
-
-                stepCount += 1;  // Update statistics
             }
         }
 
@@ -145,9 +159,9 @@
         }
 
         // Method to check that the sources' coordinates are within reasonable limits WITHOUT CHANGING THEM
-        private bool CoordinatesOutOfBorders()
+        private bool OutOfBorders(SourceGroup group)
         {
-            foreach (var source in Group.Sources)
+            foreach (var source in group.Sources)
             {
                 // Rho should lie between internal and external spheres' radiuses (the lower boundary is needed because of the gradient's properties)
                 if (source.Rho > BiggestRho || source.Rho < SmallestRho)
