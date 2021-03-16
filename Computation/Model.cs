@@ -65,12 +65,13 @@
         public SphericalVector[] GetMoveFromAntigradient()
         {
             SphericalVector[] result = new SphericalVector[Group.SourceAmount];
+            double rate = 1.0;
             for (int i = 0; i < Group.SourceAmount; ++i)
             {
                 result[i] = new SphericalVector(
-                    -Group.GradComponentRho(Surface, GroundTruthNormalDerivative, i),
-                    -Group.GradComponentPhi(Surface, GroundTruthNormalDerivative, i),
-                    -Group.GradComponentTheta(Surface, GroundTruthNormalDerivative, i));
+                    -rate * Group.GradComponentRho(Surface, GroundTruthNormalDerivative, i),
+                    -rate * Group.GradComponentPhi(Surface, GroundTruthNormalDerivative, i),
+                    -rate * Group.GradComponentTheta(Surface, GroundTruthNormalDerivative, i));
             }
 
             return result;
@@ -87,12 +88,50 @@
             return new SourceGroup(result);
         }
 
+        public SourceGroup[] GetMoveCandidates(SphericalVector[] move, double scale)
+        {
+            SourceGroup[] result = new SourceGroup[SourceAmount + 1];
+
+            result[0] = GetMoveResult(move, scale);
+            for (int i = 0; i < SourceAmount; ++i)
+            {
+                result[i + 1] = new (Group); // First candidate - antigradient step
+                result[i + 1].Sources[i] = result[0].Sources[i]; // Others - single components of the antigradient
+            }
+
+            return result;
+        }
+
+        public (SourceGroup, double) GetBestMoveCandidate(SourceGroup[] candidates)
+        {
+            double bestScore = TargetFunction(candidates[0]);
+            SourceGroup bestCandidate = candidates[0];
+
+            for (int i = 1; i < candidates.Length; ++i)
+            {
+                if (OutOfBorders(candidates[i]))
+                {
+                    continue;
+                }
+
+                double score = TargetFunction(candidates[i]);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    bestCandidate = candidates[i];
+                }
+            }
+
+            return (bestCandidate, bestScore);
+        }
+
         public (SourceGroup, double, int) GetBestMove(SphericalVector[] move, double scoreToBeat)
         {
             int reductionCount = 0;
             double stepFraction = 1.0;
-            SourceGroup candidate = GetMoveResult(move, stepFraction);
-            double score = TargetFunction(candidate);
+            SourceGroup candidate;
+            double score;
+            (candidate, score) = GetBestMoveCandidate(GetMoveCandidates(move, stepFraction));
 
             InvokeModelEvent($"Starting step reduction"); // Output
             while (OutOfBorders(candidate) || score > scoreToBeat)
@@ -109,9 +148,30 @@
                 }
 
                 stepFraction *= 0.5; // If the step will not actually minimize loss, we halve it and try again
-                candidate = GetMoveResult(move, stepFraction);
-                score = TargetFunction(candidate);
+                (candidate, score) = GetBestMoveCandidate(GetMoveCandidates(move, stepFraction));
             }
+
+            //double betterScore;
+            //double enhancementCount = 0;
+            //stepFraction *= 2;
+            //SourceGroup betterCandidate;
+            //(betterCandidate, betterScore) = GetBestMoveCandidate(GetMoveCandidates(move, stepFraction));
+            //InvokeModelEvent($"Starting step enhancement"); // Output
+            //while (!OutOfBorders(betterCandidate) && betterScore < score)
+            //{
+            //    enhancementCount += 1;
+            //    candidate = betterCandidate;
+            //    score = betterScore;
+
+            //    if (enhancementCount > 20)
+            //    {
+            //        InvokeModelEvent($"Stopping enhancement: too many steps"); // Output
+            //        break;
+            //    }
+
+            //    stepFraction *= 2;
+            //    (betterCandidate, betterScore) = GetBestMoveCandidate(GetMoveCandidates(move, stepFraction));
+            //}
 
             return (candidate, score, reductionCount);
         }
