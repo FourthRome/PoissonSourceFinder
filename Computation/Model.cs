@@ -3,6 +3,8 @@
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using Combinatorics.Collections;
+
     using Contracts;
     using LossFunctionExtensions;
 
@@ -12,21 +14,22 @@
         //------------------
         // Public properties
         //------------------
-        public double BiggestRho { get; set; } // Upper boundary for sources' coordinates
-
-        public double SmallestRho { get; set; } // Lower boundary for sources' coordinates
-
-        public Func<double, double, double, double> GroundTruthNormalDerivative { get; set; } // Loss function uses it
-
-        public SphericalSurface Surface { get; set; }
 
         public SourceGroup Group { get; set; }
 
         public int SourceAmount { get => Group.SourceAmount; }
 
-        public double Score { get; private set; }
+        public SphericalSurface Surface { get; set; }
+
+        public Func<double, double, double, double> GroundTruthNormalDerivative { get; set; } // Loss function uses it
+
+        public double SmallestRho { get; set; } // Lower boundary for sources' coordinates
+
+        public double BiggestRho { get; set; } // Upper boundary for sources' coordinates
 
         public double ErrorMargin { get; set; } // When to stop minimizing loss function
+
+        public double Score { get; private set; }
 
         // Event with info about inference process
         public delegate void ModelEventHandler(object sender, ModelEventArgs<Point> args);
@@ -36,12 +39,43 @@
         //-------------
         // Constructors
         //-------------
-        public Model(SourceGroup group, SphericalSurface surface, Func<double, double, double, double> groundTruthNormalDerivative)
+        public Model(
+            SphericalSurface surface,
+            Func<double, double, double, double> groundTruthNormalDerivative,
+            double smallestRho,
+            double biggestRho,
+            double errorMargin,
+            SourceGroup startingGroup)
         {
             // Plain old initialization
-            Group = group;
             Surface = surface;
             GroundTruthNormalDerivative = groundTruthNormalDerivative;
+            SmallestRho = smallestRho;
+            BiggestRho = biggestRho;
+            ErrorMargin = errorMargin;
+
+            // Initialize sources and Score
+            Group = startingGroup;
+            Score = TargetFunction(Group);
+        }
+
+        public Model(
+            SphericalSurface surface,
+            Func<double, double, double, double> groundTruthNormalDerivative,
+            double smallestRho,
+            double biggestRho,
+            double errorMargin,
+            int sourceAmount)
+        {
+            // Plain old initialization
+            Surface = surface;
+            SmallestRho = smallestRho;
+            BiggestRho = biggestRho;
+            GroundTruthNormalDerivative = groundTruthNormalDerivative;
+            ErrorMargin = errorMargin;
+
+            // Initialize sources and Score
+            (Group, Score) = GetBestInitialSources(sourceAmount);
         }
 
         //---------------
@@ -52,8 +86,38 @@
             OnModelEvent(new ModelEventArgs<Point>(message, group));
         }
 
-        public void FindInitialSources()
+        public Point[] GetAllInitialSources()
         {
+            return new Point[] // TODO: Make this a) smarter and b) not hard-coded
+            {
+                (0.5, 0.0, 0.0),
+                (-0.5, 0.0, 0.0),
+                (0.0, 0.5, 0.0),
+                (0.0, -0.5, 0.0),
+                (0.0, 0.0, 0.5),
+                (0.0, 0.0, -0.5),
+                (0.0, 0.0, 0.0),
+            };
+        }
+
+        public (SourceGroup, double) GetBestInitialSources(int sourceAmount)
+        {
+            SourceGroup candidate, bestCandidate = null;
+            double bestScore = -1.0;
+            Point[] initials = GetAllInitialSources();
+            foreach (List<Point> combination in new Combinations<Point>(initials, sourceAmount))
+            {
+                candidate = new SourceGroup(combination);
+                double score = TargetFunction(candidate);
+
+                if (bestScore < 0.0 || score < bestScore)
+                {
+                    bestScore = score;
+                    bestCandidate = candidate;
+                }
+            }
+
+            return (bestCandidate, bestScore);
         }
 
         // A shortcut for target function based on current model state
@@ -162,7 +226,7 @@
             // Declare necessary data structures
             SourceGroup candidate;
             SphericalVector[] proposedMove;
-            double score = TargetFunction(Group);
+            double score = Score;
 
             while (score > ErrorMargin)
             {

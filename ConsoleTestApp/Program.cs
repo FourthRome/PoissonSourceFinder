@@ -24,8 +24,9 @@
             //--------------------
             SourceGroup groundTruth = new (new Point[]
             {
-                (0.7, 0.7, 0),
-                (0.8, -0.59, 0),
+                (0.7, -0.2, -0.1),
+                (-0.3, 0.8, 0.2),
+                (-0.2, -0.1, 0.9),
             });
 
             //---------------------------------
@@ -33,8 +34,9 @@
             //---------------------------------
             SourceGroup initialSources = new (new Point[]
             {
-                (0.3, 0.4, 0.1),
-                (0.4, -0.4, -0.1),
+                (0.7, -0.2, -0.1),
+                (-0.3, 0.8, 0.2),
+                (-0.2, -0.1, 0.9),
             });
 
             //--------------------------------------
@@ -82,12 +84,24 @@
             //-------------------------------
             // Set up model's hyperparameters
             //-------------------------------
-            Model model = new (initialSources, surface, groundTruthNormalDerivative: groundTruth.NormalDerivative)
-            {
-                SmallestRho = smallestRho,
-                BiggestRho = biggestRho,
-                ErrorMargin = errorMargin,
-            };
+
+            //// Start with provided initial sources
+            //Model model = new (
+            //    surface,
+            //    groundTruth.NormalDerivative,
+            //    smallestRho,
+            //    biggestRho,
+            //    errorMargin,
+            //    initialSources);
+
+            // Start with optimal initial sources
+            Model model = new (
+                surface,
+                groundTruth.NormalDerivative,
+                smallestRho,
+                biggestRho,
+                errorMargin,
+                groundTruth.SourceAmount);
 
             //------------------------
             // Register event handlers

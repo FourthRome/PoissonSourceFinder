@@ -34,6 +34,11 @@
             }
         }
 
+        public SourceGroup(List<Point> list)
+        {
+            Sources = list.ToArray(); // TODO: Check if it makes sense to make a copy here
+        }
+
         //---------------
         // Public methods
         //---------------
