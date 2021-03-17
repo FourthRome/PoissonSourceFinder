@@ -131,7 +131,7 @@
             double stepFraction = 1.0;
             SourceGroup candidate;
             double score;
-            (candidate, score) = GetBestMoveCandidate(GetMoveCandidates(move, stepFraction));
+            (candidate, score) = GetBestMoveCandidate(GetMoveCandidates(move, stepFraction)); // TODO: choose smarter
 
             InvokeModelEvent($"Starting step reduction"); // Output
             while (OutOfBorders(candidate) || score > scoreToBeat)
@@ -150,28 +150,6 @@
                 stepFraction *= 0.5; // If the step will not actually minimize loss, we halve it and try again
                 (candidate, score) = GetBestMoveCandidate(GetMoveCandidates(move, stepFraction));
             }
-
-            //double betterScore;
-            //double enhancementCount = 0;
-            //stepFraction *= 2;
-            //SourceGroup betterCandidate;
-            //(betterCandidate, betterScore) = GetBestMoveCandidate(GetMoveCandidates(move, stepFraction));
-            //InvokeModelEvent($"Starting step enhancement"); // Output
-            //while (!OutOfBorders(betterCandidate) && betterScore < score)
-            //{
-            //    enhancementCount += 1;
-            //    candidate = betterCandidate;
-            //    score = betterScore;
-
-            //    if (enhancementCount > 20)
-            //    {
-            //        InvokeModelEvent($"Stopping enhancement: too many steps"); // Output
-            //        break;
-            //    }
-
-            //    stepFraction *= 2;
-            //    (betterCandidate, betterScore) = GetBestMoveCandidate(GetMoveCandidates(move, stepFraction));
-            //}
 
             return (candidate, score, reductionCount);
         }
@@ -200,7 +178,7 @@
                 double scoreToBeat = TargetFunction(Group);
                 (candidate, score, reductionCount) = GetBestMove(proposedMove, scoreToBeat);
 
-                Group = candidate; // TODO: don't just move towards antigradient, choose
+                Group = candidate;
                 Score = score;
 
                 InvokeModelEvent($"Final values for step {stepCount} after {reductionCount} reductions"); // Output
