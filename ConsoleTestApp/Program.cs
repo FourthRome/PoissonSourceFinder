@@ -125,11 +125,20 @@
             {
                 Console.WriteLine(source);
             }
+            Console.WriteLine();
 
             Console.WriteLine($"Sources' calculated coordinates:");
             foreach (var source in model.Group.Sources)
             {
                 Console.WriteLine(source);
+
+
+                // TODO: This is terrible, find a replacement for the block of output below
+                // This is done only to make copying data to Excel easier
+                // Obviously there must be a better way
+                Console.WriteLine(source.X);
+                Console.WriteLine(source.Y);
+                Console.WriteLine(source.Z);
             }
 
             Console.ReadLine();
