@@ -1,7 +1,9 @@
 ﻿namespace ConsoleTestApp
 {
     using System;
+    using System.Collections.Generic;
     using Computation;
+    using Contracts;
 
     public class Program
     {
@@ -20,140 +22,132 @@
             //--------------------
             // Set up real sources
             //--------------------
-            Point[] sources = new Point[]
+            SourceGroup groundTruth = new (new Point[]
             {
-                //new Point(0.5, 0.5, 0),
-                //new Point(0.6, -0.6, 0),
-                //new Point(0.7, 0.7, 0),
-                //new Point(0.8, -0.59, 0),
-                //new Point(0.4, 0.3, 0.1),
-                //new Point(0.3, -0.4, 0),
-
-                //new Point(0.5, 0, 0),
-                //new Point(0, 0.5, 0),
-                //new Point(0, 0, 0.5),
-
-                new Point(0.6, 0, 0),
-                new Point(0, 0.6, 0),
-                new Point(0, 0, 0.6),
-            };
-            Model groundTruth = new Model(radius, sources);
+                (0.7, -0.2, -0.1),
+                (-0.3, 0.8, 0.2),
+                (-0.2, -0.1, 0.9),
+            });
 
             //---------------------------------
             // Set up initial predicted sources
             //---------------------------------
-            Point[] initialSources = new Point[]
+            SourceGroup initialSources = new (new Point[]
             {
-                //new Point(0.3, 0.4, 0.1),
-                //new Point(0.4, -0.4, -0.1),
-                //new Point(0.1, 0, -0.3),
-                //new Point(0.7, 0.2, 0.5),
-                //new Point(-0.4, 0.2, 0.6),
-                //new Point(-0.5, -0.3, -0.1),
-                //new Point(-0.1, 0.7, 0.3),
-                //new Point(-0.9, -0.3, 0.1),
-
-                //new Point(0.4, 0.1, 0.1),
-                //new Point(0.2, 0.4, 0.3),
-                //new Point(-0.3, -0.3, 0.3),
-
-                //new Point(0.7, -0.2, -0.1),
-                //new Point(-0.3, 0.8, 0.2),
-                //new Point(-0.2, -0.1, 0.9),
-
-                //new Point(0.8, -0.1, 0.3),
-                //new Point(0.2, 0.3, -0.1),
-                //new Point(0.1, -0.4, 0.7),
-
-                new Point(0.7, -0.4, -0.2),
-                new Point(0.3, 0.4, -0.6),
-                new Point(-0.2, -0.5, 0.2),
-            };
-
-            //-------------------------------
-            // Set up model's hyperparameters
-            //-------------------------------
-            Model prediction = new Model(radius, initialSources, groundTruthNormalDerivative: groundTruth.NormalDerivative)
-            {
-                // TODO: separate learning process from info about sources
-                AzimuthalStep = azimuthalStep,
-                PolarStep = polarStep,
-                SmallestRho = smallestRho,
-                BiggestRho = biggestRho,
-                ErrorMargin = errorMargin,
-            };
+                (0.7, -0.2, -0.1),
+                (-0.3, 0.8, 0.2),
+                (-0.2, -0.1, 0.9),
+            });
 
             //--------------------------------------
             // Set up part of the sphere's surface S
             //--------------------------------------
+            SphericalSurface surface = new (radius, azimuthalStep, polarStep);
+
             // Full sphere
-            prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, 2 * Math.PI));
-            prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
+            surface.AddAzimuthalRange(0.0, 2 * Math.PI);
+            surface.AddPolarRange(0, Math.PI);
 
-            // Hemisphere x > 0
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(3 * Math.PI / 2, 2 * Math.PI));
-            //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
+            //// Hemisphere x > 0
+            //surface.AddAzimuthalRange(0, Math.PI / 2);
+            //surface.AddAzimuthalRange(3 * Math.PI / 2, 2 * Math.PI);
+            //surface.AddPolarRange(0, Math.PI);
 
-            // Hemisphere x < 0
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI / 2, 3 * Math.PI / 2));
-            //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
+            //// Hemisphere x < 0
+            //surface.AddAzimuthalRange(Math.PI / 2, 3 * Math.PI / 2);
+            //surface.AddPolarRange(0, Math.PI);
 
-            // Hemisphere y > 0
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI));
-            //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
+            //// Hemisphere y > 0
+            //surface.AddAzimuthalRange(0, Math.PI);
+            //surface.AddPolarRange(0, Math.PI);
 
-            // Hemisphere y < 0
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI, 2 * Math.PI));
-            //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI));
+            //// Hemisphere y < 0
+            //surface.AddAzimuthalRange(Math.PI, 2 * Math.PI);
+            //surface.AddPolarRange(0, Math.PI);
 
-            // Hemisphere z > 0
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, 2 * Math.PI));
-            //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
+            //// Hemisphere z > 0
+            //surface.AddAzimuthalRange(0, 2 * Math.PI);
+            //surface.AddPolarRange(0, Math.PI / 2);
 
-            // Hemisphere z < 0
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, 2 * Math.PI));
-            //prediction.PolarRanges.Add(new Tuple<double, double>(Math.PI / 2, Math.PI));
+            //// Hemisphere z < 0
+            //surface.AddAzimuthalRange(0, 2 * Math.PI);
+            //surface.AddPolarRange(Math.PI / 2, Math.PI);
 
-            // Eighth of a sphere x > 0, y > 0, z > 0
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
-            //prediction.PolarRanges.Add(new Tuple<double, double>(0, Math.PI / 2));
+            //// Eighth of a sphere x > 0, y > 0, z > 0
+            //surface.AddAzimuthalRange(0, Math.PI / 2);
+            //surface.AddPolarRange(0, Math.PI / 2);
 
-            // Eighth of a sphere x < 0, y < 0, z < 0
-            //prediction.AzimuthalRanges.Add(new Tuple<double, double>(Math.PI, 3 * Math.PI / 2));
-            //prediction.PolarRanges.Add(new Tuple<double, double>(Math.PI / 2, Math.PI));
+            //// Eighth of a sphere x < 0, y < 0, z < 0
+            //surface.AddAzimuthalRange(Math.PI, 3 * Math.PI / 2);
+            //surface.AddPolarRange(Math.PI / 2, Math.PI);
 
-            //-------------------------
-            // Start prediction process
-            //-------------------------
-            prediction.SearchForSources();
+            //-------------------------------
+            // Set up model's hyperparameters
+            //-------------------------------
+
+            //// Start with provided initial sources
+            //Model model = new (
+            //    surface,
+            //    groundTruth.NormalDerivative,
+            //    smallestRho,
+            //    biggestRho,
+            //    errorMargin,
+            //    initialSources);
+
+            // Start with optimal initial sources
+            Model model = new (
+                surface,
+                groundTruth.NormalDerivative,
+                smallestRho,
+                biggestRho,
+                errorMargin,
+                groundTruth.SourceAmount);
+
+            //------------------------
+            // Register event handlers
+            //------------------------
+            model.ModelEvent += ModelEventCallback;
+
+            //------------------------
+            // Start inference process
+            //------------------------
+            model.SearchForSources();
 
             //------------------
             // Print the results
             //------------------
             Console.WriteLine($"Final results:");
-            Console.WriteLine($"Real target value: {groundTruth.TargetFunction()}, model's target value: {prediction.TargetFunction()}");
+            Console.WriteLine();
+            Console.WriteLine($"Model's target value: {model.Score}");
+            Console.WriteLine();
 
-            int count = 0; // TODO: there was an analog to Python's .enumerate(); find it
-
-            Console.WriteLine($"\nSources' calculated coordinates:\n");
-            foreach (var source in prediction.Sources)
-            {
-                Console.WriteLine($"Source {count}: {source}");
-                Console.WriteLine();
-                ++count;
-            }
-
-            count = 0;
-            Console.WriteLine($"\nSources' real coordinates:\n");
+            Console.WriteLine($"Sources' real coordinates:");
             foreach (var source in groundTruth.Sources)
             {
-                Console.WriteLine($"Source {count}: {source}");
-                Console.WriteLine();
-                ++count;
+                Console.WriteLine(source);
+            }
+
+            Console.WriteLine($"Sources' calculated coordinates:");
+            foreach (var source in model.Group.Sources)
+            {
+                Console.WriteLine(source);
             }
 
             Console.ReadLine();
+        }
+
+        public static void ModelEventCallback(object sender, ModelEventArgs<Point> args)
+        {
+            Console.WriteLine(args.Message);
+            if (args.Group != null)
+            {
+                foreach (var source in args.Group)
+                {
+                    Console.WriteLine(source);
+                }
+            }
+
+            Console.WriteLine();
         }
     }
 }

@@ -3,6 +3,10 @@
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using Combinatorics.Collections;
+
+    using Contracts;
+    using LossFunctionExtensions;
 
     // Class to hold all the info related to a single computational experiment
     public class Model
@@ -11,388 +15,270 @@
         // Public properties
         //------------------
 
-        public Point[] Sources { get; set; } // Candidate sources' coordinates
+        public SourceGroup Group { get; set; }
 
-        public int SourceAmount { get; set; } // Amount of sources
+        public int SourceAmount { get => Group.SourceAmount; }
 
-        public double Radius { get; set; } // Sphere's radius
+        public SphericalSurface Surface { get; set; }
 
-        public double BiggestRho { get; set; } // Upper boundary for sources' coordinates
+        public Func<double, double, double, double> GroundTruthNormalDerivative { get; set; } // Loss function uses it
 
         public double SmallestRho { get; set; } // Lower boundary for sources' coordinates
 
-        public List<Tuple<double, double>> AzimuthalRanges { get; set; } // Part of the sphere surface we'll be processing
+        public double BiggestRho { get; set; } // Upper boundary for sources' coordinates
 
-        public List<Tuple<double, double>> PolarRanges { get; set; } // Same here
+        public double ErrorMargin { get; set; } // When to stop minimizing loss function
 
-        public Func<double, double, double> GroundTruthNormalDerivative { get; set; } // Loss function uses it
+        public double Score { get; private set; }
 
-        public double AzimuthalStep { get; set; } // Hyperparameter: width of the grid cell for integral computation
+        // Event with info about inference process
+        public delegate void ModelEventHandler(object sender, ModelEventArgs<Point> args);
 
-        public double PolarStep { get; set; } // Hyperparameter: height of the grid cell for integral computation
-
-        public double ErrorMargin { get; set; } // When to stop minimizing loss function; also the lower boundary for sources' coordinates TODO: use a separate member for the latter (maybe)
+        public event ModelEventHandler ModelEvent;
 
         //-------------
         // Constructors
         //-------------
-        public Model(double radius, Point[] sources = null, int sourceAmount = 1, Func<double, double, double> groundTruthNormalDerivative = null)
+        public Model(
+            SphericalSurface surface,
+            Func<double, double, double, double> groundTruthNormalDerivative,
+            double smallestRho,
+            double biggestRho,
+            double errorMargin,
+            SourceGroup startingGroup)
         {
             // Plain old initialization
-            Radius = radius;
-            SourceAmount = sourceAmount;
+            Surface = surface;
             GroundTruthNormalDerivative = groundTruthNormalDerivative;
-            AzimuthalRanges = new List<Tuple<double, double>>();
-            PolarRanges = new List<Tuple<double, double>>();
+            SmallestRho = smallestRho;
+            BiggestRho = biggestRho;
+            ErrorMargin = errorMargin;
 
-            // TODO: make initialization of all members obligatory
+            // Initialize sources and Score
+            Group = startingGroup;
+            Score = TargetFunction(Group);
+        }
 
-            // Sources initialization
-            if (sources != null)
-            {
-                Sources = sources;
-                SourceAmount = sources.Length;
-            }
-            else
-            {
-                Sources = new Point[SourceAmount];
-                for (int i = 0; i < SourceAmount; ++i)
-                {
-                    // Outside of the smallest suitable sphere, and spread apart horizontally
-                    Sources[i] = new Point(new SphericalVector(Radius / 2, i * 2 * Math.PI / SourceAmount, Math.PI / 2, makePositionVector: true));
-                }
-            }
+        public Model(
+            SphericalSurface surface,
+            Func<double, double, double, double> groundTruthNormalDerivative,
+            double smallestRho,
+            double biggestRho,
+            double errorMargin,
+            int sourceAmount)
+        {
+            // Plain old initialization
+            Surface = surface;
+            SmallestRho = smallestRho;
+            BiggestRho = biggestRho;
+            GroundTruthNormalDerivative = groundTruthNormalDerivative;
+            ErrorMargin = errorMargin;
+
+            // Initialize sources and Score
+            (Group, Score) = GetBestInitialSources(sourceAmount);
         }
 
         //---------------
         // Public methods
         //---------------
-
-        //---------------------------------------
-        // Current state statistics, to be public
-        //---------------------------------------
-
-        // Finds potential's normal derivative at given coordinates
-        public double NormalDerivative(double phi, double theta)
+        public void InvokeModelEvent(string message, SourceGroup group = null)
         {
-            double result = 0;
-            for (int i = 0; i < SourceAmount; ++i)
+            OnModelEvent(new ModelEventArgs<Point>(message, group));
+        }
+
+        public Point[] GetAllInitialSources()
+        {
+            return new Point[] // TODO: Make this a) smarter and b) not hard-coded
             {
-                double temp = Math.Pow(Sources[i].Rho, 2) - Math.Pow(Radius, 2);
-                temp /= Math.Pow(Sources[i].SquareDistanceFrom(Radius, phi, theta), 1.5);
-                result += temp;
+                (0.5, 0.0, 0.0),
+                (-0.5, 0.0, 0.0),
+                (0.0, 0.5, 0.0),
+                (0.0, -0.5, 0.0),
+                (0.0, 0.0, 0.5),
+                (0.0, 0.0, -0.5),
+                (0.0, 0.0, 0.0),
+            };
+        }
+
+        public (SourceGroup, double) GetBestInitialSources(int sourceAmount)
+        {
+            SourceGroup candidate, bestCandidate = null;
+            double bestScore = -1.0;
+            Point[] initials = GetAllInitialSources();
+            foreach (List<Point> combination in new Combinations<Point>(initials, sourceAmount))
+            {
+                candidate = new SourceGroup(combination);
+                double score = TargetFunction(candidate);
+
+                if (bestScore < 0.0 || score < bestScore)
+                {
+                    bestScore = score;
+                    bestCandidate = candidate;
+                }
             }
 
-            return result / (4 * Math.PI * Radius);
+            return (bestCandidate, bestScore);
         }
 
-        //--------------------------------------------------------------------------------------------------------
-        // Minimization problem's internals, possibly to become private (except for the "SearchForSources" and "TargetFunction" methods)
-        //--------------------------------------------------------------------------------------------------------
-
-        // Loss function, an integral, to be minimized
-        public double TargetFunction()
+        // A shortcut for target function based on current model state
+        public double TargetFunction(SourceGroup group)
         {
-            return IntegralOverSurface(LocalLossFunction);
+            return group.TargetFunction(Surface, GroundTruthNormalDerivative);
         }
 
-        // Essentials of the loss function, to be integrated
-        public double LocalLossFunction(double phi, double theta, int sourceNumber = -1) // TODO: find a way to avoid this dirty fictional parameter hack
+        public SphericalVector[] GetMoveFromAntigradient()
         {
-            return Math.Pow(GroundTruthNormalDerivative(phi, theta) - NormalDerivative(phi, theta), 2) * Math.Pow(Radius, 2) * Math.Sin(theta);
+            SphericalVector[] result = new SphericalVector[Group.SourceAmount];
+            double rate = 1.0;
+            for (int i = 0; i < Group.SourceAmount; ++i)
+            {
+                result[i] = new SphericalVector(
+                    -rate * Group.GradComponentRho(Surface, GroundTruthNormalDerivative, i),
+                    -rate * Group.GradComponentPhi(Surface, GroundTruthNormalDerivative, i),
+                    -rate * Group.GradComponentTheta(Surface, GroundTruthNormalDerivative, i));
+            }
+
+            return result;
+        }
+
+        public SourceGroup GetMoveResult(SphericalVector[] move, double scale)
+        {
+            Point[] result = new Point[SourceAmount];
+            for (int i = 0; i < SourceAmount; ++i)
+            {
+                result[i] = Group.Sources[i] + SphericalVector.ScaledVersion(move[i], scale);
+            }
+
+            return new SourceGroup(result);
+        }
+
+        public SourceGroup[] GetMoveCandidates(SphericalVector[] move, double scale)
+        {
+            SourceGroup[] result = new SourceGroup[SourceAmount + 1];
+
+            result[0] = GetMoveResult(move, scale);
+            for (int i = 0; i < SourceAmount; ++i)
+            {
+                result[i + 1] = new (Group); // First candidate - antigradient step
+                result[i + 1].Sources[i] = result[0].Sources[i]; // Others - single components of the antigradient
+            }
+
+            return result;
+        }
+
+        public (SourceGroup, double) GetBestMoveCandidate(SourceGroup[] candidates)
+        {
+            double bestScore = TargetFunction(candidates[0]);
+            SourceGroup bestCandidate = candidates[0];
+
+            for (int i = 1; i < candidates.Length; ++i)
+            {
+                if (OutOfBorders(candidates[i]))
+                {
+                    continue;
+                }
+
+                double score = TargetFunction(candidates[i]);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    bestCandidate = candidates[i];
+                }
+            }
+
+            return (bestCandidate, bestScore);
+        }
+
+        public (SourceGroup, double, int) GetBestMove(SphericalVector[] move, double scoreToBeat)
+        {
+            int reductionCount = 0;
+            double stepFraction = 1.0;
+            SourceGroup candidate;
+            double score;
+            (candidate, score) = GetBestMoveCandidate(GetMoveCandidates(move, stepFraction)); // TODO: choose smarter
+
+            InvokeModelEvent($"Starting step reduction"); // Output
+            while (OutOfBorders(candidate) || score > scoreToBeat)
+            {
+                if (!OutOfBorders(candidate))
+                {
+                    reductionCount += 1;
+                }
+
+                if (reductionCount > 20)
+                {
+                    InvokeModelEvent($"Stopping reduction: too many steps"); // Output
+                    break;
+                }
+
+                stepFraction *= 0.5; // If the step will not actually minimize loss, we halve it and try again
+                (candidate, score) = GetBestMoveCandidate(GetMoveCandidates(move, stepFraction));
+            }
+
+            return (candidate, score, reductionCount);
         }
 
         // The main method, finding the sources, including all stages
         public void SearchForSources()
         {
-            double descentRate = 1.0;  // Hyperparameter: how fast should we descend TODO: descent logic should be revised
-            int stepCount = 1;  // Statistics for the log
+            int stepCount = 0;
 
             // Declare necessary data structures
-            Point[] oldSources = new Point[SourceAmount];
-            SphericalVector[] proposedMove = new SphericalVector[SourceAmount];
+            SourceGroup candidate;
+            SphericalVector[] proposedMove;
+            double score = Score;
 
-            while (TargetFunction() > ErrorMargin)
+            while (score > ErrorMargin)
             {
-                // Here goes a single step of the gradient descent
-
-                // Diagnostic output
-                Console.WriteLine($"________________________________________Starting step {stepCount}________________________________________");
-
-                // Backup old sources
-                for (int i = 0; i < SourceAmount; ++i)
-                {
-                    oldSources[i] = Sources[i];
-                }
-
-                // Diagnostic output
-                for (int i = 0; i < SourceAmount; ++i)
-                {
-                    Console.WriteLine($"\nSource {i}'s coordinates before the step: {Sources[i]}");
-                }
-
-                // Coefficient for gradient normalization
-                // double normalizer = 0.0;
-
-                // Compute the steps towards the antigradient
-                for (int i = 0; i < SourceAmount; ++i)
-                {
-                    proposedMove[i] = new SphericalVector(
-                        -descentRate * GradComponentRho(i),
-                        -descentRate * GradComponentPhi(i),
-                        -descentRate * GradComponentTheta(i));
-
-                    // normalizer += proposedMove[i].SquareNorm();
-
-                    // Diagnostic output
-                    Console.WriteLine($"\nStep's initial components for source {i} before normalization are {proposedMove[i]}");
-                }
-
-                // Make the largest step that improves quality
-                // Initial step
-                double oldTargetValue = TargetFunction();
-                for (int i = 0; i < SourceAmount; ++i)
-                {
-                    Sources[i] = oldSources[i] + SphericalVector.ScaledVersion(proposedMove[i], 1.0);
-
-                    // Diagnostic output
-                    Console.WriteLine($"\nSource {i}'s coordinates after initial step: {Sources[i]}");
-                }
-
-                // Diagnostic output
-                Console.WriteLine($"\n________________________________________Starting step reduction________________________________________");
-
-                int reductionCount = 0;
-                double stepFraction = 0.5;  // If the step will not actually minimize loss, we halve it and try again
-                while (CoordinatesOutOfBorders() || TargetFunction() > oldTargetValue)
-                {
-                    reductionCount += 1;
-
-                    if (!CoordinatesOutOfBorders() && reductionCount > 20)
-                    {
-                        // Diagnostic output
-                        Console.WriteLine($"#################### Stopping reduction: too many steps #########################");
-                        break;
-                    }
-
-                    // Diagnostic output
-                    Console.WriteLine($"________________________________________Reduction for step {stepCount}: {reductionCount}________________________________________");
-                    Console.WriteLine($"Was out of borders: {CoordinatesOutOfBorders()}, old target value: {oldTargetValue}, new target value: {TargetFunction()}");
-
-                    for (int i = 0; i < SourceAmount; ++i)
-                    {
-                        Sources[i] = oldSources[i] + SphericalVector.ScaledVersion(proposedMove[i], stepFraction);
-                        stepFraction *= 0.5;
-
-                        // Diagnostic output
-                        Console.WriteLine($"Now trying coordinates for source {i}: {Sources[i]}");
-                    }
-                }
-
-                // Diagnostic output
-                Console.WriteLine($"\n________________________________________Final values for step {stepCount} after {reductionCount} reductions________________________________________");
-                Console.WriteLine($"Old target value: {oldTargetValue}, new target value: {TargetFunction()}");
-
-                for (int i = 0; i < SourceAmount; ++i)
-                {
-                    Console.WriteLine($"Source {i}'s coordinates: {Sources[i]}");
-                }
-
-                // Diagnostic output
-                Console.WriteLine();
-
-                // Update statistics
                 stepCount += 1;
+
+                InvokeModelEvent($"Starting step {stepCount}"); // Output
+                InvokeModelEvent($"Sources coordinates before the step");
+                InvokeModelEvent($"Coordinates", Group);
+
+                proposedMove = GetMoveFromAntigradient();
+
+                int reductionCount;
+                double scoreToBeat = TargetFunction(Group);
+                (candidate, score, reductionCount) = GetBestMove(proposedMove, scoreToBeat);
+
+                Group = candidate;
+                Score = score;
+
+                InvokeModelEvent($"Final values for step {stepCount} after {reductionCount} reductions"); // Output
+                InvokeModelEvent($"Old target value: {scoreToBeat}, new target value: {score}");
+                InvokeModelEvent("Coordinates", Group);
             }
         }
 
-        // Method to check that the sources' coordinates are within reasonable limits WITHOUT CHANGING THEM
-        private bool CoordinatesOutOfBorders()
+        //------------------------------
+        // Protected and private methods
+        //------------------------------
+        protected virtual void OnModelEvent(ModelEventArgs<Point> e)
         {
-            for (int i = 0; i < SourceAmount; ++i)
+            ModelEventHandler handler = ModelEvent;
+            handler?.Invoke(this, e);
+        }
+
+        // Method to check that the sources' coordinates are within reasonable limits WITHOUT CHANGING THEM
+        private bool OutOfBorders(SourceGroup group)
+        {
+            foreach (var source in group.Sources)
             {
                 // Rho should lie between internal and external spheres' radiuses (the lower boundary is needed because of the gradient's properties)
-                if (Sources[i].Rho > BiggestRho || Sources[i].Rho < SmallestRho)
+                if (source.Rho > BiggestRho || source.Rho < SmallestRho)
                 {
                     return true;
                 }
 
                 // Theta should lie within [0; Pi] segment, but, unlike phi, does not form circular trajectory, we should account for that
-                if (Sources[i].Theta < 0 || Sources[i].Theta > Math.PI)
+                if (source.Theta < 0 || source.Theta > Math.PI)
                 {
                     return true;
                 }
             }
 
             return false;
-        }
-
-        //-----------------------------------------------------------
-        // Gradient computation specifics, possibly to become private
-        //-----------------------------------------------------------
-
-        // Component of the loss function's gradient, an integral, 1/3
-        private double GradComponentRho(int sourceNumber)
-        {
-            return IntegralOverSurface(LocalGradComponentRho, sourceNumber);
-        }
-
-        // Component of the loss function's gradient, an integral, 2/3
-        private double GradComponentPhi(int sourceNumber)
-        {
-            return IntegralOverSurface(LocalGradComponentPhi, sourceNumber);
-        }
-
-        // Component of the loss function's gradient, an integral, 3/3
-        private double GradComponentTheta(int sourceNumber)
-        {
-            return IntegralOverSurface(LocalGradComponentTheta, sourceNumber);
-        }
-
-        // Component of the loss function's gradient, to be integrated, 1/3
-        private double LocalGradComponentRho(double phi, double theta, int sourceNumber)
-        {
-            return CommonDerivativeComponent(phi, theta) * RhoDerivativeComponent(phi, theta, sourceNumber);
-        }
-
-        // Component of the loss function's gradient, to be integrated, 2/3
-        private double LocalGradComponentPhi(double phi, double theta, int sourceNumber)
-        {
-            return CommonDerivativeComponent(phi, theta) * PhiDerivativeComponent(phi, theta, sourceNumber);
-        }
-
-        // Component of the loss function's gradient, to be integrated, 3/3
-        private double LocalGradComponentTheta(double phi, double theta, int sourceNumber)
-        {
-            return CommonDerivativeComponent(phi, theta) * ThetaDerivativeComponent(phi, theta, sourceNumber);
-        }
-
-        // Component of component of the loss function's gradient, 1/4
-        private double CommonDerivativeComponent(double phi, double theta)
-        {
-            double result = 0.0;
-
-            for (int i = 0; i < SourceAmount; ++i)
-            {
-                result += (Math.Pow(Radius, 2) - Math.Pow(Sources[i].Rho, 2)) / Math.Pow(Sources[i].SquareDistanceFrom(Radius, phi, theta), 1.5);
-            }
-
-            result /= 4 * Math.PI * Radius;
-            result += GroundTruthNormalDerivative(phi, theta);
-            // result *= Math.Sin(theta);  // COMMENTED OUT: probably a mistake
-            return result;
-        }
-
-        // Component of component of the loss function's gradient, 2/4
-        private double RhoDerivativeComponent(double phi, double theta, int sourceNumber)
-        {
-            // Shortcuts
-            Point source_i = Sources[sourceNumber];
-            double rho_i = Sources[sourceNumber].Rho;
-            double phi_i = Sources[sourceNumber].Phi;
-            double theta_i = Sources[sourceNumber].Theta;
-
-            // Computation
-            double result = (Math.Cos(phi - phi_i) * Math.Sin(theta) * Math.Sin(theta_i)) + (Math.Cos(theta) * Math.Cos(theta_i));
-            result = rho_i - (Radius * result);
-            result *= Math.Pow(rho_i, 2) - Math.Pow(Radius, 2);
-            result *= 3 / (2 * Math.PI * Math.Pow(source_i.SquareDistanceFrom(Radius, phi, theta), 2.5));
-            result += -rho_i / (Math.PI * Math.Pow(source_i.SquareDistanceFrom(Radius, phi, theta), 1.5));
-            // result *= Radius;  // COMMENTED OUT: probably a mistake
-            result /= Radius;
-            return result;
-        }
-
-        // Component of component of the loss function's gradient, 3/4
-        private double PhiDerivativeComponent(double phi, double theta, int sourceNumber)
-        {
-            // Shortcuts
-            Point source_i = Sources[sourceNumber];
-            double rho_i = Sources[sourceNumber].Rho;
-            double phi_i = Sources[sourceNumber].Phi;
-            double theta_i = Sources[sourceNumber].Theta;
-
-            // Computation
-            double result = (Math.Pow(Radius, 2) - Math.Pow(rho_i, 2)) * rho_i;
-            result *= Math.Sin(phi - phi_i) * Math.Sin(theta) * Math.Sin(theta_i);
-            result /= Math.Pow(source_i.SquareDistanceFrom(Radius, phi, theta), 2.5);
-            result *= 3 / (2 * Math.PI); // COMMENTED OUT R^2: probably a mistake
-
-            return result;
-        }
-
-        // Component of component of the loss function's gradient, 4/4
-        private double ThetaDerivativeComponent(double phi, double theta, int sourceNumber)
-        {
-            // Shortcuts
-            Point source_i = Sources[sourceNumber];
-            double rho_i = Sources[sourceNumber].Rho;
-            double phi_i = Sources[sourceNumber].Phi;
-            double theta_i = Sources[sourceNumber].Theta;
-
-            // Computation
-            double result = (Math.Pow(Radius, 2) - Math.Pow(rho_i, 2)) * rho_i;
-            result *= (Math.Cos(phi - phi_i) * Math.Sin(theta) * Math.Cos(theta_i)) - (Math.Cos(theta) * Math.Sin(theta_i));
-            result /= Math.Pow(source_i.SquareDistanceFrom(Radius, phi, theta), 2.5);
-            result *= 3 / (2 * Math.PI);  // COMMENTED OUT R^2: probably a mistake
-
-            return result;
-        }
-
-        //---------------------------------------------------------
-        // Integral computation methods, possibly to become private
-        //---------------------------------------------------------
-
-        // General method for integrals' computation, sum of integrals over all areas
-        private double IntegralOverSurface(Func<double, double, int, double> func, int sourceNumber = -1)
-        {
-            double result = 0.0;
-            foreach (var aziRange in AzimuthalRanges)
-            {
-                foreach (var polRange in PolarRanges)
-                {
-                    result += IntegralOverRectangularArea(func, aziRange, polRange, sourceNumber);
-                }
-            }
-
-            return result;
-        }
-
-        // General method for integrals' computation over one area
-        private double IntegralOverRectangularArea(Func<double, double, int, double> func, Tuple<double, double> aziRange, Tuple<double, double> polRange, int sourceNumber = -1)
-        {
-            // How many points should the grid consist of
-            int aziCount = Convert.ToInt32(Math.Floor((aziRange.Item2 - aziRange.Item1) / AzimuthalStep));
-            int polCount = Convert.ToInt32(Math.Floor((polRange.Item2 - polRange.Item1) / PolarStep));
-
-            double result = 0.0;
-            Task<double>[] tasks = new Task<double>[aziCount];
-            for (int col = 0; col < aziCount; ++col)
-            {
-                tasks[col] = Task.Factory.StartNew(
-                    objCol =>
-                    {
-                        int i = (int)objCol;
-                        double localResult = 0.0;
-
-                        for (int j = 0; j < polCount; ++j)
-                        {
-                            localResult += AzimuthalStep * Math.Pow(Radius, 2)
-                            * (Math.Cos(polRange.Item1 + (j * PolarStep)) - Math.Cos(polRange.Item1 + ((j + 1) * PolarStep)))
-                            * func(aziRange.Item1 + ((i + 0.5) * AzimuthalStep), polRange.Item1 + ((j + 0.5) * PolarStep), sourceNumber);
-                        }
-
-                        return localResult;
-                    },
-                    col);
-            }
-
-            for (int col = 0; col < aziCount; ++col)
-            {
-                result += tasks[col].Result;
-            }
-
-            return result;
         }
     }
 }

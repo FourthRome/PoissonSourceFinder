@@ -2,16 +2,18 @@
 {
     using System;
 
-    public class Point
+    using Contracts;
+
+    public class Point : IPoint
     {
         //---------------------------------------------------
         // Public properties and their backing private fields
         //---------------------------------------------------
-        public double X { get; set; }
+        public double X { get; private set; } // TODO: Make Point immutable type
 
-        public double Y { get; set; }
+        public double Y { get; private set; }
 
-        public double Z { get; set; }
+        public double Z { get; private set; }
 
         public double Rho { get => Math.Sqrt(SquareNorm()); }
 
@@ -31,6 +33,11 @@
 
         public Point(Point other)
             : this(other.X, other.Y, other.Z)
+        {
+        }
+
+        public Point((double, double, double) coords)
+            : this(coords.Item1, coords.Item2, coords.Item3)
         {
         }
 
@@ -80,9 +87,15 @@
 
         public static Point operator +(Point point, SphericalVector vec)
         {
-            Point result = new Point(point);
+            Point result = new (point);
             result.AddSphericalVector(vec);
             return result;
+        }
+
+        // This is required for a simplified experiment's data format
+        public static implicit operator Point((double, double, double) coords)
+        {
+            return new Point(coords);
         }
 
         //----------------
