@@ -249,6 +249,8 @@
                 InvokeModelEvent($"Old target value: {scoreToBeat}, new target value: {score}");
                 InvokeModelEvent("Coordinates", Group);
             }
+
+            InvokeModelEvent($"Stopping at {stepCount} iterations");
         }
 
         //------------------------------

@@ -44,8 +44,8 @@
             SphericalSurface surface = new (radius, azimuthalStep, polarStep);
 
             // Full sphere
-            surface.AddAzimuthalRange(0.0, 2 * Math.PI);
-            surface.AddPolarRange(0, Math.PI);
+            //surface.AddAzimuthalRange(0.0, 2 * Math.PI);
+            //surface.AddPolarRange(0, Math.PI);
 
             //// Hemisphere x > 0
             //surface.AddAzimuthalRange(0, Math.PI / 2);
@@ -57,8 +57,8 @@
             //surface.AddPolarRange(0, Math.PI);
 
             //// Hemisphere y > 0
-            //surface.AddAzimuthalRange(0, Math.PI);
-            //surface.AddPolarRange(0, Math.PI);
+            surface.AddAzimuthalRange(0, Math.PI);
+            surface.AddPolarRange(0, Math.PI);
 
             //// Hemisphere y < 0
             //surface.AddAzimuthalRange(Math.PI, 2 * Math.PI);
@@ -125,13 +125,13 @@
             {
                 Console.WriteLine(source);
             }
+
             Console.WriteLine();
 
             Console.WriteLine($"Sources' calculated coordinates:");
             foreach (var source in model.Group.Sources)
             {
                 Console.WriteLine(source);
-
 
                 // TODO: This is terrible, find a replacement for the block of output below
                 // This is done only to make copying data to Excel easier
