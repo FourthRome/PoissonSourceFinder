@@ -65,6 +65,11 @@
             return $"({Rho}, phi: {Phi}, theta: {Theta})";
         }
 
+        public double SquareNorm()
+        {
+            return Rho * Rho;
+        }
+
         // To return to standard rho >= 0, phi from 0 to 2Pi, theta from 0 to Pi
         public void MakePositional()
         {

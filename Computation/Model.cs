@@ -29,6 +29,10 @@
 
         public double ErrorMargin { get; set; } // When to stop minimizing loss function
 
+        public double MoveStopMargin { get; set; } // If step is smaller than this, it's time to stop
+
+        public double LossStopMargin { get; set; } // If loss changed less than this, it's time to stop
+
         public double Score { get; private set; }
 
         // Event with info about inference process
@@ -45,6 +49,8 @@
             double smallestRho,
             double biggestRho,
             double errorMargin,
+            double moveStopMargin,
+            double lossStopMargin,
             SourceGroup startingGroup)
         {
             // Plain old initialization
@@ -53,6 +59,8 @@
             SmallestRho = smallestRho;
             BiggestRho = biggestRho;
             ErrorMargin = errorMargin;
+            MoveStopMargin = moveStopMargin;
+            LossStopMargin = lossStopMargin;
 
             // Initialize sources and Score
             Group = startingGroup;
@@ -65,6 +73,8 @@
             double smallestRho,
             double biggestRho,
             double errorMargin,
+            double moveStopMargin,
+            double lossStopMargin,
             int sourceAmount)
         {
             // Plain old initialization
@@ -73,6 +83,8 @@
             BiggestRho = biggestRho;
             GroundTruthNormalDerivative = groundTruthNormalDerivative;
             ErrorMargin = errorMargin;
+            MoveStopMargin = moveStopMargin;
+            LossStopMargin = lossStopMargin;
 
             // Initialize sources and Score
             (Group, Score) = GetBestInitialSources(sourceAmount);
@@ -189,7 +201,7 @@
             return (bestCandidate, bestScore);
         }
 
-        public (SourceGroup, double, int) GetBestMove(SphericalVector[] move, double scoreToBeat)
+        public (SourceGroup, double, int, double) GetBestMove(SphericalVector[] move, double scoreToBeat)
         {
             int reductionCount = 0;
             double stepFraction = 1.0;
@@ -215,7 +227,8 @@
                 (candidate, score) = GetBestMoveCandidate(GetMoveCandidates(move, stepFraction));
             }
 
-            return (candidate, score, reductionCount);
+            // TODO: it's probably not the best idea to have such complicated API
+            return (candidate, score, reductionCount, stepFraction);
         }
 
         // The main method, finding the sources, including all stages
@@ -240,14 +253,37 @@
 
                 int reductionCount;
                 double scoreToBeat = TargetFunction(Group);
-                (candidate, score, reductionCount) = GetBestMove(proposedMove, scoreToBeat);
+                double moveScale;
+                (candidate, score, reductionCount, moveScale) = GetBestMove(proposedMove, scoreToBeat);
 
+                double oldScore = Score;
                 Group = candidate;
                 Score = score;
 
                 InvokeModelEvent($"Final values for step {stepCount} after {reductionCount} reductions"); // Output
                 InvokeModelEvent($"Old target value: {scoreToBeat}, new target value: {score}");
                 InvokeModelEvent("Coordinates", Group);
+
+                // TODO: make this less ugly
+                if (Math.Abs(oldScore - Score) < LossStopMargin)
+                {
+                    InvokeModelEvent($"Functional does not change significantly; halting calculations after step {stepCount}");
+                    break;
+                }
+
+                // TODO: make this less ugly
+                double moveNorm = 0;
+                foreach (var sourceMove in proposedMove)
+                {
+                    moveNorm += SphericalVector.ScaledVersion(sourceMove, moveScale).SquareNorm();
+                }
+
+                moveNorm = Math.Sqrt(moveNorm);
+                if (moveNorm < MoveStopMargin)
+                {
+                    InvokeModelEvent($"Steps became too small; halting calculations after step {stepCount}");
+                    break;
+                }
             }
         }
 

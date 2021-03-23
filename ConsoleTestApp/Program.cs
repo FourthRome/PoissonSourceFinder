@@ -18,14 +18,16 @@
             double smallestRho = 0;
             double biggestRho = radius - 1e-2;
             double errorMargin = 1e-2;
+            double moveStopMargin = 1e-3;
+            double lossStopMargin = 1e-3;
 
             //--------------------
             // Set up real sources
             //--------------------
             SourceGroup groundTruth = new (new Point[]
             {
-                (0.3, 0.4, 0.1),
-                (0.4, -0.4, -0.1),
+                (0.7, 0.7, 0),
+                (0.8, -0.59, 0),
             });
 
             //---------------------------------
@@ -91,6 +93,8 @@
             //    smallestRho,
             //    biggestRho,
             //    errorMargin,
+            //    moveStopMargin,
+            //    lossStopMargin,
             //    initialSources);
 
             // Start with optimal initial sources
@@ -100,6 +104,8 @@
                 smallestRho,
                 biggestRho,
                 errorMargin,
+                moveStopMargin,
+                lossStopMargin,
                 groundTruth.SourceAmount);
 
             //------------------------
@@ -125,13 +131,13 @@
             {
                 Console.WriteLine(source);
             }
+
             Console.WriteLine();
 
             Console.WriteLine($"Sources' calculated coordinates:");
             foreach (var source in model.Group.Sources)
             {
                 Console.WriteLine(source);
-
 
                 // TODO: This is terrible, find a replacement for the block of output below
                 // This is done only to make copying data to Excel easier
