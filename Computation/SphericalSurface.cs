@@ -20,6 +20,9 @@
 
         public double PolarStep { get; set; } // Hyperparameter: height of the grid cell for integral computation
 
+        public int GridNodesNumber { get; private set; } // How many nodes does the grid have
+                                                         // TODO: find a better way to store grid's info
+
         //-------------
         // Constructors
         //-------------
@@ -45,6 +48,8 @@
             {
                 PolarRanges = new List<(double, double)>();
             }
+
+            GridNodesNumber = GetNodesNumber(); // TODO: find a better way to store grid's info
         }
 
         //---------------
@@ -53,11 +58,13 @@
         public void AddAzimuthalRange((double, double) range)
         {
             AzimuthalRanges.Add(range);
+            GridNodesNumber = GetNodesNumber(); // TODO: find a better way to store grid's info
         }
 
         public void AddPolarRange((double, double) range)
         {
             PolarRanges.Add(range);
+            GridNodesNumber = GetNodesNumber(); // TODO: find a better way to store grid's info
         }
 
         public void AddAzimuthalRange(double begin, double end)
@@ -68,6 +75,22 @@
         public void AddPolarRange(double begin, double end)
         {
             AddPolarRange((begin, end));
+        }
+
+        public int GetNodesNumber() // TODO: find a better way to store grid's info
+        {
+            int result = 0;
+            foreach (var aziRange in AzimuthalRanges)
+            {
+                foreach (var polRange in PolarRanges)
+                {
+                    int aziCount = Convert.ToInt32(Math.Floor((aziRange.Item2 - aziRange.Item1) / AzimuthalStep));
+                    int polCount = Convert.ToInt32(Math.Floor((polRange.Item2 - polRange.Item1) / PolarStep));
+                    result += aziCount * polCount;
+                }
+            }
+
+            return result;
         }
 
         // General method for integrals' computation, sum of integrals over all areas
