@@ -17,26 +17,32 @@
 
         public int SourceAmount { get => Sources.Length; }
 
+        public double Noise { get; set; } // TODO: find a better way to distort function
+
         //-------------
         // Constructors
         //-------------
-        public SourceGroup(Point[] sources = null)
+        public SourceGroup(Point[] sources = null, double noise = 0.0)
         {
             Sources = sources;
+            Noise = noise;
         }
 
-        public SourceGroup(SourceGroup group)
+        public SourceGroup(SourceGroup group, double noise = 0.0)
         {
             Sources = new Point[group.SourceAmount];
             for (int i = 0; i < group.SourceAmount; ++i)
             {
                 Sources[i] = group.Sources[i];
             }
+
+            Noise = noise;
         }
 
-        public SourceGroup(List<Point> list)
+        public SourceGroup(List<Point> list, double noise = 0.0)
         {
             Sources = list.ToArray(); // TODO: Check if it makes sense to make a copy here
+            Noise = noise;
         }
 
         //---------------
@@ -54,7 +60,7 @@
                 result += temp;
             }
 
-            return result / (4 * Math.PI * rho);
+            return (result / (4 * Math.PI * rho)) + Noise; //TODO: dind a better way to distort function
         }
 
         // IEnumerable details

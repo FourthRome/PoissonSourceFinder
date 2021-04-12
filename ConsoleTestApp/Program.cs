@@ -108,6 +108,13 @@
                 lossStopMargin,
                 groundTruth.SourceAmount);
 
+            //----------
+            // Add noise
+            //----------
+            // TODO: find a better way to distort normal derivative (right now it's so ugly I want to cry)
+            double delta = 10;
+            groundTruth.Noise = delta / surface.GetNodesNumber();
+
             //------------------------
             // Register event handlers
             //------------------------
