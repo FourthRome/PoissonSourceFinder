@@ -24,7 +24,7 @@
             //--------------------
             // Set up real sources
             //--------------------
-            SourceGroup groundTruth = new (new Point[]
+            SourceGroup groundTruthSourceGroup = new (new Point[]
             {
                 (0.7, 0.7, 0),
                 (0.8, -0.59, 0),
@@ -33,7 +33,7 @@
             //---------------------------------
             // Set up initial predicted sources
             //---------------------------------
-            //SourceGroup initialSources = new (new Point[]
+            //SourceGroup initialSourceGroup = new (new Point[]
             //{
             //    (0.7, -0.2, -0.1),
             //    (-0.3, 0.8, 0.2),
@@ -87,6 +87,13 @@
             //-----------------------------------------------------
             SphericalGrid grid = new RectangularSphericalGrid(surface, azimuthalStep, polarStep);
 
+            //-------------------
+            // Cache ground truth
+            //-------------------
+            Console.WriteLine("Caching ground truth...");
+            GroundTruth groundTruth = new (groundTruthSourceGroup, grid);
+            Console.WriteLine("Ground truth cached.");
+
             //-------------------------------
             // Set up model's hyperparameters
             //-------------------------------
@@ -94,24 +101,24 @@
             //// Start with provided initial sources
             //Model model = new (
             //    grid,
-            //    groundTruth.NormalDerivative,
+            //    groundTruthSourceGroup.NormalDerivative,
             //    smallestRho,
             //    biggestRho,
             //    errorMargin,
             //    moveStopMargin,
             //    lossStopMargin,
-            //    initialSources);
+            //    initialSourceGroup);
 
             // Start with optimal initial sources
             Model model = new (
                 grid,
-                groundTruth.NormalDerivative,
+                groundTruthSourceGroup.NormalDerivative,
                 smallestRho,
                 biggestRho,
                 errorMargin,
                 moveStopMargin,
                 lossStopMargin,
-                groundTruth.SourceAmount);
+                groundTruthSourceGroup.SourceAmount);
 
             //----------
             // Add noise
@@ -139,7 +146,7 @@
             Console.WriteLine();
 
             Console.WriteLine($"Sources' real coordinates:");
-            foreach (var source in groundTruth.Sources)
+            foreach (var source in groundTruthSourceGroup.Sources)
             {
                 Console.WriteLine(source);
             }

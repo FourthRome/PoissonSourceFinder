@@ -41,9 +41,9 @@
             for (int i = 0; i < tasksNumber; ++i)
             {
                 tasks[i] = Task.Factory.StartNew(
-                    boxedTaskNumber =>
+                    boxedTaskIdx =>
                     {
-                        int offset = (int)boxedTaskNumber * ElementsBatchSize;
+                        int offset = (int)boxedTaskIdx * ElementsBatchSize;
                         int stopCondition = Math.Min(offset + ElementsBatchSize, ElementsNumber);
                         double localResult = 0.0;
 
