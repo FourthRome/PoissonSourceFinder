@@ -112,7 +112,7 @@
             // Start with optimal initial sources
             Model model = new (
                 grid,
-                groundTruthSourceGroup.NormalDerivative,
+                groundTruth.CachedNormalDerivative,
                 smallestRho,
                 biggestRho,
                 errorMargin,

@@ -38,6 +38,15 @@
             ErrorsOnElements = new ();
         }
 
+        //---------------
+        // Public methods
+        //---------------
+        public double CachedNormalDerivative(double rho, double phi, double theta)
+        {
+            // We ignore `rho` parameter as it is here to comply with the integration interface
+            return CachedValues[(phi, theta)];
+        }
+
         //------------------
         // Protected methods
         //------------------
