@@ -19,7 +19,7 @@
 
         public int SourceAmount { get => Group.SourceAmount; }
 
-        public SphericalSurface Surface { get; set; }
+        public SphericalGrid Grid { get; set; }
 
         public Func<double, double, double, double> GroundTruthNormalDerivative { get; set; } // Loss function uses it
 
@@ -44,7 +44,7 @@
         // Constructors
         //-------------
         public Model(
-            SphericalSurface surface,
+            SphericalGrid grid,
             Func<double, double, double, double> groundTruthNormalDerivative,
             double smallestRho,
             double biggestRho,
@@ -54,7 +54,7 @@
             SourceGroup startingGroup)
         {
             // Plain old initialization
-            Surface = surface;
+            Grid = grid;
             GroundTruthNormalDerivative = groundTruthNormalDerivative;
             SmallestRho = smallestRho;
             BiggestRho = biggestRho;
@@ -68,7 +68,7 @@
         }
 
         public Model(
-            SphericalSurface surface,
+            SphericalGrid grid,
             Func<double, double, double, double> groundTruthNormalDerivative,
             double smallestRho,
             double biggestRho,
@@ -78,7 +78,7 @@
             int sourceAmount)
         {
             // Plain old initialization
-            Surface = surface;
+            Grid = grid;
             SmallestRho = smallestRho;
             BiggestRho = biggestRho;
             GroundTruthNormalDerivative = groundTruthNormalDerivative;
@@ -135,7 +135,7 @@
         // A shortcut for target function based on current model state
         public double TargetFunction(SourceGroup group)
         {
-            return group.TargetFunction(Surface, GroundTruthNormalDerivative);
+            return group.TargetFunction(Grid, GroundTruthNormalDerivative);
         }
 
         public SphericalVector[] GetMoveFromAntigradient()
@@ -145,9 +145,9 @@
             for (int i = 0; i < Group.SourceAmount; ++i)
             {
                 result[i] = new SphericalVector(
-                    -rate * Group.GradComponentRho(Surface, GroundTruthNormalDerivative, i),
-                    -rate * Group.GradComponentPhi(Surface, GroundTruthNormalDerivative, i),
-                    -rate * Group.GradComponentTheta(Surface, GroundTruthNormalDerivative, i));
+                    -rate * Group.GradComponentRho(Grid, GroundTruthNormalDerivative, i),
+                    -rate * Group.GradComponentPhi(Grid, GroundTruthNormalDerivative, i),
+                    -rate * Group.GradComponentTheta(Grid, GroundTruthNormalDerivative, i));
             }
 
             return result;

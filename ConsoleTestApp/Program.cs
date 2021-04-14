@@ -43,7 +43,7 @@
             //--------------------------------------
             // Set up part of the sphere's surface S
             //--------------------------------------
-            SphericalSurface surface = new (radius, azimuthalStep, polarStep);
+            SphericalSurface surface = new (radius);
 
             // Full sphere
             surface.AddAzimuthalRange(0.0, 2 * Math.PI);
@@ -82,13 +82,18 @@
             //surface.AddAzimuthalRange(Math.PI, 3 * Math.PI / 2);
             //surface.AddPolarRange(Math.PI / 2, Math.PI);
 
+            //-----------------------------------------------------
+            // Transform the specified surface into a specific grid
+            //-----------------------------------------------------
+            SphericalGrid grid = new RectangularSphericalGrid(surface, azimuthalStep, polarStep);
+
             //-------------------------------
             // Set up model's hyperparameters
             //-------------------------------
 
             //// Start with provided initial sources
             //Model model = new (
-            //    surface,
+            //    grid,
             //    groundTruth.NormalDerivative,
             //    smallestRho,
             //    biggestRho,
@@ -99,7 +104,7 @@
 
             // Start with optimal initial sources
             Model model = new (
-                surface,
+                grid,
                 groundTruth.NormalDerivative,
                 smallestRho,
                 biggestRho,
@@ -112,8 +117,8 @@
             // Add noise
             //----------
             // TODO: find a better way to distort normal derivative (right now it's so ugly I want to cry)
-            double delta = 10;
-            groundTruth.Noise = delta / surface.GetNodesNumber();
+            //double delta = 10;
+            //groundTruth.Noise = delta / surface.GetNodesNumber();
 
             //------------------------
             // Register event handlers

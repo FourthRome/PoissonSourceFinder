@@ -15,12 +15,17 @@
         //-------------
         // Constructors
         //-------------
+        public RectangularSphericalGrid(SphericalSurface surface, double azimuthalStep, double polarStep)
+            : this(surface.Radius, surface.AzimuthalRanges, surface.PolarRanges, azimuthalStep, polarStep)
+        {
+        }
+
         public RectangularSphericalGrid(
             double radius,
-            double azimuthalStep,
-            double polarStep,
             List<(double, double)> azimuthalRanges,
-            List<(double, double)> polarRanges)
+            List<(double, double)> polarRanges,
+            double azimuthalStep,
+            double polarStep)
             : base(radius)
         {
             AzimuthalStep = azimuthalStep;

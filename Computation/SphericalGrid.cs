@@ -4,7 +4,7 @@
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
-    public class SphericalGrid
+    public abstract class SphericalGrid
     {
         //----------------------------------------------------
         // Constants TODO: should be abstracted somewhere else
@@ -23,15 +23,16 @@
         //-------------
         // Constructors
         //-------------
-        public SphericalGrid(double radius)
+        protected SphericalGrid(double radius)
         {
             Radius = radius;
+            Elements = new ();
         }
 
         //---------------
         // Public methods
         //---------------
-        public double IntegralOverGrid(Func<double, double, double, double> func)
+        public double Integrate(Func<double, double, double, double> func)
         {
             double result = 0.0;
             int tasksNumber = Convert.ToInt32(Math.Ceiling((double)ElementsNumber / ElementsBatchSize));

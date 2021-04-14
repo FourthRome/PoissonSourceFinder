@@ -30,12 +30,12 @@
         // Component of the loss function's gradient, an integral, 1/3
         public static double GradComponentRho(
             this SourceGroup group,
-            SphericalSurface surface,
+            SphericalGrid grid,
             Func<double, double, double, double> groundTruthNormalDerivative,
             int sourceNumber)
         {
             // TODO: do not create new function every time, cache it
-            return surface.IntegralOverSurface((double rho, double phi, double theta) =>
+            return grid.Integrate((double rho, double phi, double theta) =>
             {
                 return group.CommonDerivativeComponent(rho, phi, theta, groundTruthNormalDerivative) *
                     group.RhoDerivativeComponentFactory(sourceNumber)(rho, phi, theta);
@@ -45,11 +45,11 @@
         // Component of the loss function's gradient, an integral, 2/3
         public static double GradComponentPhi(
             this SourceGroup group,
-            SphericalSurface surface,
+            SphericalGrid grid,
             Func<double, double, double, double> groundTruthNormalDerivative,
             int sourceNumber)
         {
-            return surface.IntegralOverSurface((double rho, double phi, double theta) =>
+            return grid.Integrate((double rho, double phi, double theta) =>
             {
                 return group.CommonDerivativeComponent(rho, phi, theta, groundTruthNormalDerivative) *
                     group.PhiDerivativeComponentFactory(sourceNumber)(rho, phi, theta);
@@ -59,11 +59,11 @@
         // Component of the loss function's gradient, an integral, 3/3
         public static double GradComponentTheta(
             this SourceGroup group,
-            SphericalSurface surface,
+            SphericalGrid grid,
             Func<double, double, double, double> groundTruthNormalDerivative,
             int sourceNumber)
         {
-            return surface.IntegralOverSurface((double rho, double phi, double theta) =>
+            return grid.Integrate((double rho, double phi, double theta) =>
             {
                 return group.CommonDerivativeComponent(rho, phi, theta, groundTruthNormalDerivative) *
                     group.ThetaDerivativeComponentFactory(sourceNumber)(rho, phi, theta);
@@ -73,10 +73,10 @@
         // Loss function over the specified surface
         public static double TargetFunction(
             this SourceGroup group,
-            SphericalSurface surface,
+            SphericalGrid grid,
             Func<double, double, double, double> groundTruthNormalDerivative)
         {
-            return surface.IntegralOverSurface((double rho, double phi, double theta) =>
+            return grid.Integrate((double rho, double phi, double theta) =>
             {
                 return Math.Pow(groundTruthNormalDerivative(rho, phi, theta) - group.NormalDerivative(rho, phi, theta), 2) *
                     Math.Pow(rho, 2) * Math.Sin(theta);

@@ -28,6 +28,8 @@
         {
             Type = type;
             BorderNodes = borderNodes;
+            //BorderNodes = new (double, double)[borderNodes.Length];
+            //Array.Copy(borderNodes, BorderNodes, borderNodes.Length);
             Square = GetSquare(this);
             CentralNode = GetCentralNode(this);
         }
