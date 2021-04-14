@@ -16,7 +16,7 @@
         //------------------
         // Public properties
         //------------------
-        public double[] ErrorsOnElements { get; protected set; }
+        public Dictionary<(double, double), double> ErrorsOnElements { get; protected set; }
 
         //---------------------
         // Protected properties
@@ -25,7 +25,7 @@
 
         protected SphericalGrid Grid { get; set; }
 
-        protected double[] CachedValues { get; set; }
+        protected Dictionary<(double, double), double> CachedValues { get; set; }
 
         //-------------
         // Constructors
@@ -35,7 +35,7 @@
             Group = group;
             Grid = grid;
             CacheGroundTruth();
-            ErrorsOnElements = new double[Grid.ElementsNumber];
+            ErrorsOnElements = new ();
         }
 
         //------------------
@@ -43,30 +43,17 @@
         //------------------
         protected void CacheGroundTruth()
         {
-            CachedValues = new double[Grid.ElementsNumber];
+            CachedValues = new Dictionary<(double, double), double>();
 
-            int taskNumber = Convert.ToInt32(Math.Ceiling((double)Grid.ElementsNumber / TaskBatchSize));
-            Task[] tasks = new Task[taskNumber];
-
-            for (int i = 0; i < taskNumber; ++i)
+            for (int i = 0; i < Grid.ElementsNumber; ++i)
             {
-                tasks[i] = Task.Factory.StartNew(
-                    boxedTaskIdx =>
-                    {
-                        int offset = (int)boxedTaskIdx * TaskBatchSize;
-                        int stopCondition = Math.Min(offset + TaskBatchSize, Grid.ElementsNumber);
-                        for (int j = offset; j < stopCondition; ++j)
-                        {
-                            CachedValues[j] = Group.NormalDerivative(
+                (double, double) key = Grid.Elements[i].CentralNode;
+                double value = Group.NormalDerivative(
                                 Grid.Radius,
-                                Grid.Elements[j].CentralNode.Item1,
-                                Grid.Elements[j].CentralNode.Item2);
-                        }
-                    },
-                    i);
+                                Grid.Elements[i].CentralNode.Item1,
+                                Grid.Elements[i].CentralNode.Item2);
+                CachedValues.Add(key, value);
             }
-
-            Task.WaitAll(tasks);
         }
     }
 }
