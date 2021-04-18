@@ -91,7 +91,7 @@
             // Cache ground truth
             //-------------------
             Console.WriteLine("Caching ground truth...");
-            GroundTruth groundTruth = new (groundTruthSourceGroup, grid);
+            GroundTruth groundTruth = new (groundTruthSourceGroup, grid, 1);
             Console.WriteLine("Ground truth cached.");
 
             //-------------------------------

@@ -18,6 +18,8 @@
         //------------------
         public Dictionary<(double, double), double> ErrorsOnElements { get; protected set; }
 
+        public double Delta { get; protected set; }
+
         //---------------------
         // Protected properties
         //---------------------
@@ -27,13 +29,17 @@
 
         protected Dictionary<(double, double), double> CachedValues { get; set; }
 
+        protected double[] ErrorsOnElementsArray { get; set; } // TODO: There must be a better way to store that info
+
         //-------------
         // Constructors
         //-------------
-        public GroundTruth(SourceGroup group, SphericalGrid grid)
+        public GroundTruth(SourceGroup group, SphericalGrid grid, double delta = 0.0)
         {
             Group = group;
             Grid = grid;
+            Delta = delta;
+            PrepareErrors();
             CacheGroundTruth();
             ErrorsOnElements = new ();
         }
@@ -50,9 +56,30 @@
         //------------------
         // Protected methods
         //------------------
+        protected void PrepareErrors()
+        {
+            ErrorsOnElementsArray = new double[Grid.ElementsNumber];
+            var rand = new Random();
+            double norm = 0.0;
+
+            for (int i = 0; i < ErrorsOnElementsArray.Length; ++i)
+            {
+                ErrorsOnElementsArray[i] = (rand.NextDouble() * 2) - 1;
+                norm += Math.Pow(ErrorsOnElementsArray[i], 2.0);
+            }
+
+            norm = Math.Sqrt(norm);
+
+            for (int i = 0; i < ErrorsOnElementsArray.Length; ++i)
+            {
+                ErrorsOnElementsArray[i] = ErrorsOnElementsArray[i] * Delta / norm;
+            }
+        }
+
         protected void CacheGroundTruth()
         {
             CachedValues = new Dictionary<(double, double), double>();
+            ErrorsOnElements = new Dictionary<(double, double), double>();
 
             for (int i = 0; i < Grid.ElementsNumber; ++i)
             {
@@ -61,7 +88,9 @@
                                 Grid.Radius,
                                 Grid.Elements[i].CentralNode.Item1,
                                 Grid.Elements[i].CentralNode.Item2);
+                value += ErrorsOnElementsArray[i];
                 CachedValues.Add(key, value);
+                ErrorsOnElements.Add(key, ErrorsOnElementsArray[i]);
             }
         }
     }
