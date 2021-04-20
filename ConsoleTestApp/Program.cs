@@ -19,7 +19,7 @@
             double smallestRho = 0;
             double biggestRho = radius - 1e-2;
             double errorMargin = 0;
-            double moveStopMargin = 1e-3;
+            double moveStopMargin = 1e-5;
             double lossStopMargin = 0;
 
             //--------------------
@@ -121,12 +121,8 @@
                 lossStopMargin,
                 groundTruthSourceGroup.SourceAmount);
 
-            //----------
-            // Add noise
-            //----------
-            // TODO: find a better way to distort normal derivative (right now it's so ugly I want to cry)
-            //double delta = 10;
-            //groundTruth.Noise = delta / surface.GetNodesNumber();
+            Console.WriteLine($"Initial model score: {model.Score}");
+            Console.WriteLine($"Initial sources' coordinates", model.Group);
 
             //------------------------
             // Register event handlers

@@ -65,8 +65,6 @@
             // Initialize sources and Score
             Group = startingGroup;
             Score = TargetFunction(Group);
-            InvokeModelEvent($"Initial model score: {Score}");
-            InvokeModelEvent($"Initial sources' coordinates", Group);
         }
 
         public Model(
