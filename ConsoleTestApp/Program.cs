@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using Computation;
     using Contracts;
 
@@ -17,17 +18,17 @@
             double polarStep = 1e-2;
             double smallestRho = 0;
             double biggestRho = radius - 1e-2;
-            double errorMargin = 1e-2;
+            double errorMargin = 0;
             double moveStopMargin = 1e-3;
-            double lossStopMargin = 1e-3;
+            double lossStopMargin = 0;
 
             //--------------------
             // Set up real sources
             //--------------------
             SourceGroup groundTruthSourceGroup = new (new Point[]
             {
-                (0.7, 0.7, 0),
-                (0.8, -0.59, 0),
+                (0.2, 0.4, 0.8),
+                (0.3, -0.7, -0.4),
             });
 
             //---------------------------------
@@ -46,8 +47,8 @@
             SphericalSurface surface = new (radius);
 
             // Full sphere
-            surface.AddAzimuthalRange(0.0, 2 * Math.PI);
-            surface.AddPolarRange(0, Math.PI);
+            //surface.AddAzimuthalRange(0.0, 2 * Math.PI);
+            //surface.AddPolarRange(0, Math.PI);
 
             //// Hemisphere x > 0
             //surface.AddAzimuthalRange(0, Math.PI / 2);
@@ -55,8 +56,8 @@
             //surface.AddPolarRange(0, Math.PI);
 
             //// Hemisphere x < 0
-            //surface.AddAzimuthalRange(Math.PI / 2, 3 * Math.PI / 2);
-            //surface.AddPolarRange(0, Math.PI);
+            surface.AddAzimuthalRange(Math.PI / 2, 3 * Math.PI / 2);
+            surface.AddPolarRange(0, Math.PI);
 
             //// Hemisphere y > 0
             //surface.AddAzimuthalRange(0, Math.PI);
@@ -91,7 +92,7 @@
             // Cache ground truth
             //-------------------
             Console.WriteLine("Caching ground truth...");
-            GroundTruth groundTruth = new (groundTruthSourceGroup, grid, 1);
+            GroundTruth groundTruth = new (groundTruthSourceGroup, grid, 0);
             Console.WriteLine("Ground truth cached.");
 
             //-------------------------------
@@ -181,6 +182,15 @@
             }
 
             Console.WriteLine();
+        }
+
+        public static void WriteResultsToFile(SourceGroup groundTruthSourceGroup, Model model, string fileLabel = "no-label")
+        {
+            string filename = DateTime.Now.ToString("s") + "-" + fileLabel;
+            //using (var file = File.Create())
+            //{
+
+            //}
         }
     }
 }
