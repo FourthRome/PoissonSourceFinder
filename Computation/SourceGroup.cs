@@ -74,6 +74,21 @@
         {
             return new SourceGroupEnum(Sources);
         }
+
+        //----------------------
+        // Public static methods
+        //----------------------
+        public static double DistanceBetween(SourceGroup a, SourceGroup b)
+        {
+            // TODO: probably make this function not just compare i-th elements, but check all the permutations
+            double result = 0.0;
+            for (int i = 0; i < a.SourceAmount; ++i)
+            {
+                result += (a.Sources[i] - b.Sources[i]).SquareNorm();
+            }
+
+            return Math.Sqrt(result);
+        }
     }
 
     // IEnumerable details

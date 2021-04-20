@@ -92,6 +92,11 @@
             return result;
         }
 
+        public static Point operator -(Point a, Point b)
+        {
+            return new Point(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+        }
+
         // This is required for a simplified experiment's data format
         public static implicit operator Point((double, double, double) coords)
         {

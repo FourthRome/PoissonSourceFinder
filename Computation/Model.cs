@@ -237,21 +237,18 @@
         public void SearchForSources()
         {
             int stepCount = 0;
-
-            // Declare necessary data structures
-            SphericalVector[] proposedMove;
-
             while (Score > ErrorMargin)
             {
                 stepCount += 1;
 
                 InvokeModelEvent($"Starting step {stepCount}"); // Output
 
-                proposedMove = GetMoveFromAntigradient();
+                SphericalVector[] proposedMove = GetMoveFromAntigradient();
 
                 int reductionCount;
-                double oldScore = Score;
                 double moveScale;
+                double oldScore = Score;
+                SourceGroup oldGroup = Group;
                 (Group, Score, reductionCount, moveScale) = GetBestMove(proposedMove, oldScore);
 
                 InvokeModelEvent($"Final values for step {stepCount} after {reductionCount} reductions"); // Output
@@ -266,15 +263,7 @@
                 }
 
                 // TODO: make this less ugly
-                double moveNorm = 0;
-                foreach (var sourceMove in proposedMove)
-                {
-                    //Console.WriteLine(SphericalVector.ScaledVersion(sourceMove, moveScale));
-                    moveNorm += SphericalVector.ScaledVersion(sourceMove, moveScale).SquareNorm();
-                    //InvokeModelEvent($"Move component: {SphericalVector.ScaledVersion(sourceMove, moveScale)}");
-                }
-
-                moveNorm = Math.Sqrt(moveNorm);
+                double moveNorm = SourceGroup.DistanceBetween(Group, oldGroup);
                 InvokeModelEvent($"Move's square norm: {moveNorm}");
 
                 if (moveNorm < MoveStopMargin)
