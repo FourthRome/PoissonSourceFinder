@@ -47,8 +47,8 @@
             SphericalSurface surface = new (radius);
 
             // Full sphere
-            //surface.AddAzimuthalRange(0.0, 2 * Math.PI);
-            //surface.AddPolarRange(0, Math.PI);
+            surface.AddAzimuthalRange(0.0, 2 * Math.PI);
+            surface.AddPolarRange(0, Math.PI);
 
             //// Hemisphere x > 0
             //surface.AddAzimuthalRange(0, Math.PI / 2);
@@ -56,8 +56,8 @@
             //surface.AddPolarRange(0, Math.PI);
 
             //// Hemisphere x < 0
-            surface.AddAzimuthalRange(Math.PI / 2, 3 * Math.PI / 2);
-            surface.AddPolarRange(0, Math.PI);
+            //surface.AddAzimuthalRange(Math.PI / 2, 3 * Math.PI / 2);
+            //surface.AddPolarRange(0, Math.PI);
 
             //// Hemisphere y > 0
             //surface.AddAzimuthalRange(0, Math.PI);

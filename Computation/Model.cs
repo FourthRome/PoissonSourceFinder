@@ -65,6 +65,8 @@
             // Initialize sources and Score
             Group = startingGroup;
             Score = TargetFunction(Group);
+            InvokeModelEvent($"Initial model score: {Score}");
+            InvokeModelEvent($"Initial sources' coordinates", Group);
         }
 
         public Model(
@@ -237,31 +239,23 @@
             int stepCount = 0;
 
             // Declare necessary data structures
-            SourceGroup candidate;
             SphericalVector[] proposedMove;
-            double score = Score;
 
-            while (score > ErrorMargin)
+            while (Score > ErrorMargin)
             {
                 stepCount += 1;
 
                 InvokeModelEvent($"Starting step {stepCount}"); // Output
-                InvokeModelEvent($"Sources coordinates before the step");
-                InvokeModelEvent($"Coordinates", Group);
 
                 proposedMove = GetMoveFromAntigradient();
 
                 int reductionCount;
-                double scoreToBeat = TargetFunction(Group);
-                double moveScale;
-                (candidate, score, reductionCount, moveScale) = GetBestMove(proposedMove, scoreToBeat);
-
                 double oldScore = Score;
-                Group = candidate;
-                Score = score;
+                double moveScale;
+                (Group, Score, reductionCount, moveScale) = GetBestMove(proposedMove, oldScore);
 
                 InvokeModelEvent($"Final values for step {stepCount} after {reductionCount} reductions"); // Output
-                InvokeModelEvent($"Old target value: {scoreToBeat}, new target value: {score}");
+                InvokeModelEvent($"Old target value: {oldScore}, new target value: {Score}");
                 InvokeModelEvent("Coordinates", Group);
 
                 // TODO: make this less ugly
@@ -275,10 +269,14 @@
                 double moveNorm = 0;
                 foreach (var sourceMove in proposedMove)
                 {
+                    //Console.WriteLine(SphericalVector.ScaledVersion(sourceMove, moveScale));
                     moveNorm += SphericalVector.ScaledVersion(sourceMove, moveScale).SquareNorm();
+                    //InvokeModelEvent($"Move component: {SphericalVector.ScaledVersion(sourceMove, moveScale)}");
                 }
 
                 moveNorm = Math.Sqrt(moveNorm);
+                InvokeModelEvent($"Move's square norm: {moveNorm}");
+
                 if (moveNorm < MoveStopMargin)
                 {
                     InvokeModelEvent($"Steps became too small; halting calculations after step {stepCount}");

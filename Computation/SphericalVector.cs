@@ -67,7 +67,15 @@
 
         public double SquareNorm()
         {
-            return Rho * Rho;
+            // TODO: revise this logic; is it expected behavior?
+            if (IsPositionVector)
+            {
+                return Rho * Rho;
+            }
+            else
+            {
+                return (Rho * Rho) + (Phi * Phi) + (Theta * Theta);
+            }
         }
 
         // To return to standard rho >= 0, phi from 0 to 2Pi, theta from 0 to Pi
