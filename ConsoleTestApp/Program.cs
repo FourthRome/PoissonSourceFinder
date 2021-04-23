@@ -3,12 +3,13 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Threading.Tasks;
     using Computation;
     using Contracts;
 
     public class Program
     {
-        public static void Main()
+        public static async Task Main()
         {
             //--------------------------------------------------
             // Provide hyperparameters for the searching process
@@ -122,12 +123,19 @@
                 groundTruthSourceGroup.SourceAmount);
 
             Console.WriteLine($"Initial model score: {model.Score}");
-            Console.WriteLine($"Initial sources' coordinates", model.Group);
+            Console.WriteLine($"Initial sources' coordinates:");
+            Console.WriteLine(model.Group);
 
             //------------------------
             // Register event handlers
             //------------------------
             model.ModelEvent += ModelEventCallback;
+
+            //----------------------
+            // Store initial sources
+            //----------------------
+            SourceGroup initialSourceGroup = model.Group;
+            double initialScore = model.Score;
 
             //------------------------
             // Start inference process
@@ -139,29 +147,18 @@
             //------------------
             Console.WriteLine($"Final results:");
             Console.WriteLine();
+
             Console.WriteLine($"Model's target value: {model.Score}");
             Console.WriteLine();
 
             Console.WriteLine($"Sources' real coordinates:");
-            foreach (var source in groundTruthSourceGroup.Sources)
-            {
-                Console.WriteLine(source);
-            }
-
+            Console.WriteLine(groundTruthSourceGroup);
             Console.WriteLine();
 
             Console.WriteLine($"Sources' calculated coordinates:");
-            foreach (var source in model.Group.Sources)
-            {
-                Console.WriteLine(source);
+            Console.WriteLine(model.Group);
 
-                // TODO: This is terrible, find a replacement for the block of output below
-                // This is done only to make copying data to Excel easier
-                // Obviously there must be a better way
-                Console.WriteLine(source.X);
-                Console.WriteLine(source.Y);
-                Console.WriteLine(source.Z);
-            }
+            await WriteResultsToFiles(groundTruthSourceGroup, model, initialSourceGroup, initialScore, fileLabel: "debug", path: "../../../../Results");
 
             Console.ReadLine();
         }
@@ -180,13 +177,42 @@
             Console.WriteLine();
         }
 
-        public static void WriteResultsToFile(SourceGroup groundTruthSourceGroup, Model model, string fileLabel = "no-label")
+        public static async Task WriteResultsToFiles(
+                SourceGroup groundTruthSourceGroup,
+                Model model,
+                SourceGroup initialSourceGroup,
+                double initialScore,
+                string fileLabel = "no-label",
+                string path = "./")
         {
-            string filename = DateTime.Now.ToString("s") + "-" + fileLabel;
-            //using (var file = File.Create())
-            //{
+            string filename = DateTime.Now.ToString("yyyy-mm-dd_hh-mm-ss") + "-" + fileLabel + ".txt";
+            using StreamWriter file = new (path + "/" + filename);
 
-            //}
+            await file.WriteLineAsync("Real sources' cartesian coordinates:");
+
+            foreach (var source in groundTruthSourceGroup.Sources)
+            {
+                await file.WriteLineAsync(source.ToStringCartesian());
+            }
+
+            await file.WriteLineAsync("Initial sources' cartesian coordinates:");
+
+            foreach (var source in initialSourceGroup.Sources)
+            {
+                await file.WriteLineAsync(source.ToStringCartesian());
+            }
+
+            await file.WriteLineAsync($"Initial score: {initialScore}");
+
+            await file.WriteLineAsync($"Calculated sourses' cartesian coordinates:");
+            foreach (var source in model.Group.Sources)
+            {
+                await file.WriteLineAsync(source.ToStringCartesian());
+            }
+
+            await file.WriteLineAsync($"Final score: {model.Score}");
+
+            await file.WriteLineAsync($"Number of iterations: {model.IterationsNumber}");
         }
     }
 }

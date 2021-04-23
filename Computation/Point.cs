@@ -59,6 +59,11 @@
             return $"Carthesian: ({X},{Y},{Z}), Spherical: ({Rho}, {Phi}, {Theta})";
         }
 
+        public string ToStringCartesian()
+        {
+            return $"{X} {Y} {Z}";
+        }
+
         // Used in normalization and to get Rho
         public double SquareNorm()
         {

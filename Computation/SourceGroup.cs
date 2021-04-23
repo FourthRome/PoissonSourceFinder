@@ -57,6 +57,30 @@
             return result / (4 * Math.PI * rho);
         }
 
+        public override string ToString()
+        {
+            StringBuilder builder = new ();
+
+            foreach (var source in Sources)
+            {
+                builder.Append(source.ToString() + "\n");
+            }
+
+            return builder.ToString();
+        }
+
+        public string ToStringCartesian()
+        {
+            StringBuilder builder = new ();
+
+            foreach (var source in Sources)
+            {
+                builder.Append(source.ToStringCartesian() + "\n");
+            }
+
+            return builder.ToString();
+        }
+
         // IEnumerable details
         IEnumerator IEnumerable.GetEnumerator()
         {

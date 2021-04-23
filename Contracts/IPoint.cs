@@ -19,6 +19,5 @@ namespace Contracts
         public double Phi { get; }
 
         public double Theta { get; }
-
     }
 }

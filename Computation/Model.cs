@@ -35,6 +35,8 @@
 
         public double Score { get; private set; }
 
+        public int IterationsNumber { get; private set; }
+
         // Event with info about inference process
         public delegate void ModelEventHandler(object sender, ModelEventArgs<Point> args);
 
@@ -61,6 +63,7 @@
             ErrorMargin = errorMargin;
             MoveStopMargin = moveStopMargin;
             LossStopMargin = lossStopMargin;
+            IterationsNumber = 0;
 
             // Initialize sources and Score
             Group = startingGroup;
@@ -85,6 +88,7 @@
             ErrorMargin = errorMargin;
             MoveStopMargin = moveStopMargin;
             LossStopMargin = lossStopMargin;
+            IterationsNumber = 0;
 
             // Initialize sources and Score
             (Group, Score) = GetBestInitialSources(sourceAmount);
@@ -238,6 +242,7 @@
             while (Score > ErrorMargin)
             {
                 stepCount += 1;
+                IterationsNumber += 1;
 
                 InvokeModelEvent($"Starting step {stepCount}"); // Output
 
