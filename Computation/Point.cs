@@ -64,6 +64,11 @@
             return $"{X} {Y} {Z}";
         }
 
+        public string ToStringCartesianCsv()
+        {
+            return $"{X},{Y},{Z},";
+        }
+
         // Used in normalization and to get Rho
         public double SquareNorm()
         {

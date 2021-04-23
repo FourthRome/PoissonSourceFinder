@@ -158,7 +158,9 @@
             Console.WriteLine($"Sources' calculated coordinates:");
             Console.WriteLine(model.Group);
 
-            await WriteResultsToFiles(groundTruthSourceGroup, model, initialSourceGroup, initialScore, fileLabel: "debug", path: "../../../../Results");
+            string resultsPath = "../../../../Results";
+            await WriteResultsTxt(groundTruthSourceGroup, model, initialSourceGroup, initialScore, fileLabel: "debug", path: resultsPath);
+            await WriteResultsCsv(groundTruthSourceGroup, model, initialSourceGroup, initialScore, fileLabel: "debug", path: resultsPath);
 
             Console.ReadLine();
         }
@@ -177,7 +179,7 @@
             Console.WriteLine();
         }
 
-        public static async Task WriteResultsToFiles(
+        public static async Task WriteResultsTxt(
                 SourceGroup groundTruthSourceGroup,
                 Model model,
                 SourceGroup initialSourceGroup,
@@ -189,30 +191,46 @@
             using StreamWriter file = new (path + "/" + filename);
 
             await file.WriteLineAsync("Real sources' cartesian coordinates:");
-
-            foreach (var source in groundTruthSourceGroup.Sources)
-            {
-                await file.WriteLineAsync(source.ToStringCartesian());
-            }
+            await file.WriteLineAsync(groundTruthSourceGroup.ToStringCartesian());
 
             await file.WriteLineAsync("Initial sources' cartesian coordinates:");
-
-            foreach (var source in initialSourceGroup.Sources)
-            {
-                await file.WriteLineAsync(source.ToStringCartesian());
-            }
-
+            await file.WriteLineAsync(initialSourceGroup.ToStringCartesian());
             await file.WriteLineAsync($"Initial score: {initialScore}");
 
             await file.WriteLineAsync($"Calculated sourses' cartesian coordinates:");
-            foreach (var source in model.Group.Sources)
-            {
-                await file.WriteLineAsync(source.ToStringCartesian());
-            }
+            await file.WriteLineAsync(model.Group.ToStringCartesian());
 
             await file.WriteLineAsync($"Final score: {model.Score}");
-
             await file.WriteLineAsync($"Number of iterations: {model.IterationsNumber}");
+        }
+
+        public static async Task WriteResultsCsv(
+                SourceGroup groundTruthSourceGroup,
+                Model model,
+                SourceGroup initialSourceGroup,
+                double initialScore,
+                string fileLabel = "no-label",
+                string path = "./")
+        {
+            string filename = DateTime.Now.ToString("yyyy-mm-dd_hh-mm-ss") + "-" + fileLabel + ".csv";
+            using StreamWriter file = new (path + "/" + filename);
+
+            await file.WriteLineAsync("x,y,z,cat,label,");
+
+            foreach (var (idx, source) in groundTruthSourceGroup.Sources.Enumerate(start: 1))
+            {
+                await file.WriteLineAsync($"{source.ToStringCartesianCsv()}A,A{idx},");
+            }
+
+            foreach (var (idx, source) in initialSourceGroup.Sources.Enumerate(start: 1))
+            {
+                await file.WriteLineAsync($"{source.ToStringCartesianCsv()}B,B{idx},");
+            }
+
+            foreach (var (idx, source) in model.Group.Sources.Enumerate(start: 1))
+            {
+                await file.WriteLineAsync($"{source.ToStringCartesianCsv()}C,C{idx},");
+            }
         }
     }
 }
