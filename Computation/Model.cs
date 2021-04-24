@@ -51,9 +51,10 @@
             double smallestRho,
             double biggestRho,
             double errorMargin,
-            double moveStopMargin,
             double lossStopMargin,
-            SourceGroup startingGroup)
+            double moveStopMargin,
+            int sourceAmount = 0,
+            SourceGroup startingGroup = null)
         {
             // Plain old initialization
             Grid = grid;
@@ -66,32 +67,16 @@
             IterationsNumber = 0;
 
             // Initialize sources and Score
-            Group = startingGroup;
-            Score = TargetFunction(Group);
-        }
 
-        public Model(
-            SphericalGrid grid,
-            Func<double, double, double, double> groundTruthNormalDerivative,
-            double smallestRho,
-            double biggestRho,
-            double errorMargin,
-            double moveStopMargin,
-            double lossStopMargin,
-            int sourceAmount)
-        {
-            // Plain old initialization
-            Grid = grid;
-            SmallestRho = smallestRho;
-            BiggestRho = biggestRho;
-            GroundTruthNormalDerivative = groundTruthNormalDerivative;
-            ErrorMargin = errorMargin;
-            MoveStopMargin = moveStopMargin;
-            LossStopMargin = lossStopMargin;
-            IterationsNumber = 0;
-
-            // Initialize sources and Score
-            (Group, Score) = GetBestInitialSources(sourceAmount);
+            if (startingGroup != null)
+            {
+                Group = startingGroup;
+                Score = TargetFunction(Group);
+            }
+            else
+            {
+                (Group, Score) = GetBestInitialSources(sourceAmount);
+            }
         }
 
         //---------------

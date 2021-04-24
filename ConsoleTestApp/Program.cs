@@ -11,45 +11,14 @@
     {
         public static async Task Main()
         {
-            //--------------------------------------------------
-            // Provide hyperparameters for the searching process
-            //--------------------------------------------------
-            double radius = 1.0;
-            double azimuthalStep = 1e-2;
-            double polarStep = 1e-2;
-            double smallestRho = 0;
-            double biggestRho = radius - 1e-2;
-            double errorMargin = 0;
-            double moveStopMargin = 1e-5;
-            double lossStopMargin = 0;
-
-            //--------------------
-            // Set up real sources
-            //--------------------
-            SourceGroup groundTruthSourceGroup = new (new Point[]
-            {
-                (0.2, 0.4, 0.8),
-                (0.3, -0.7, -0.4),
-            });
-
-            //---------------------------------
-            // Set up initial predicted sources
-            //---------------------------------
-            //SourceGroup initialSourceGroup = new (new Point[]
-            //{
-            //    (0.7, -0.2, -0.1),
-            //    (-0.3, 0.8, 0.2),
-            //    (-0.2, -0.1, 0.9),
-            //});
-
             //--------------------------------------
             // Set up part of the sphere's surface S
             //--------------------------------------
-            SphericalSurface surface = new (radius);
+            //SphericalSurface surface = new (radius);
 
-            // Full sphere
-            surface.AddAzimuthalRange(0.0, 2 * Math.PI);
-            surface.AddPolarRange(0, Math.PI);
+            //// Full sphere
+            //surface.AddAzimuthalRange(0.0, 2 * Math.PI);
+            //surface.AddPolarRange(0, Math.PI);
 
             //// Hemisphere x > 0
             //surface.AddAzimuthalRange(0, Math.PI / 2);
@@ -84,153 +53,54 @@
             //surface.AddAzimuthalRange(Math.PI, 3 * Math.PI / 2);
             //surface.AddPolarRange(Math.PI / 2, Math.PI);
 
-            //-----------------------------------------------------
-            // Transform the specified surface into a specific grid
-            //-----------------------------------------------------
-            SphericalGrid grid = new RectangularSphericalGrid(surface, azimuthalStep, polarStep);
+            // TODO: God forgive me...
+            Experiment experiment = new (
+                new ()
+                {
+                    {
+                        "GroundTruthSourceGroup",
+                        new SourceGroup(
+                            new Point[]
+                            {
+                                (0.2, 0.4, 0.8),
+                                (0.3, -0.7, -0.4),
+                            })
+                    },
+                },
+                new ()
+                {
+                    {
+                        "Surface",
+                        new SphericalSurface(
+                            1.0,
+                            new ()
+                            {
+                                (0.0, 2 * Math.PI),
+                            },
+                            new ()
+                            {
+                                (0.0, Math.PI),
+                            })
+                    },
+                },
+                new ()
+                {
+                    {
+                        "MoveNormStoppingCondition",
+                        1e-5
+                    },
+                },
+                new ()
+                {
+                    {
+                        "ExperimentLabel",
+                        "TestRunForNewFormat"
+                    },
+                });
 
-            //-------------------
-            // Cache ground truth
-            //-------------------
-            Console.WriteLine("Caching ground truth...");
-            GroundTruth groundTruth = new (groundTruthSourceGroup, grid, 0);
-            Console.WriteLine("Ground truth cached.");
-
-            //-------------------------------
-            // Set up model's hyperparameters
-            //-------------------------------
-
-            //// Start with provided initial sources
-            //Model model = new (
-            //    grid,
-            //    groundTruthSourceGroup.NormalDerivative,
-            //    smallestRho,
-            //    biggestRho,
-            //    errorMargin,
-            //    moveStopMargin,
-            //    lossStopMargin,
-            //    initialSourceGroup);
-
-            // Start with optimal initial sources
-            Model model = new (
-                grid,
-                groundTruth.CachedNormalDerivative,
-                smallestRho,
-                biggestRho,
-                errorMargin,
-                moveStopMargin,
-                lossStopMargin,
-                groundTruthSourceGroup.SourceAmount);
-
-            Console.WriteLine($"Initial model score: {model.Score}");
-            Console.WriteLine($"Initial sources' coordinates:");
-            Console.WriteLine(model.Group);
-
-            //------------------------
-            // Register event handlers
-            //------------------------
-            model.ModelEvent += ModelEventCallback;
-
-            //----------------------
-            // Store initial sources
-            //----------------------
-            SourceGroup initialSourceGroup = model.Group;
-            double initialScore = model.Score;
-
-            //------------------------
-            // Start inference process
-            //------------------------
-            model.SearchForSources();
-
-            //------------------
-            // Print the results
-            //------------------
-            Console.WriteLine($"Final results:");
-            Console.WriteLine();
-
-            Console.WriteLine($"Model's target value: {model.Score}");
-            Console.WriteLine();
-
-            Console.WriteLine($"Sources' real coordinates:");
-            Console.WriteLine(groundTruthSourceGroup);
-            Console.WriteLine();
-
-            Console.WriteLine($"Sources' calculated coordinates:");
-            Console.WriteLine(model.Group);
-
-            string resultsPath = "../../../../Results";
-            await WriteResultsTxt(groundTruthSourceGroup, model, initialSourceGroup, initialScore, fileLabel: "debug", path: resultsPath);
-            await WriteResultsCsv(groundTruthSourceGroup, model, initialSourceGroup, initialScore, fileLabel: "debug", path: resultsPath);
+            await experiment.Run();
 
             Console.ReadLine();
-        }
-
-        public static void ModelEventCallback(object sender, ModelEventArgs<Point> args)
-        {
-            Console.WriteLine(args.Message);
-            if (args.Group != null)
-            {
-                foreach (var source in args.Group)
-                {
-                    Console.WriteLine(source);
-                }
-            }
-
-            Console.WriteLine();
-        }
-
-        public static async Task WriteResultsTxt(
-                SourceGroup groundTruthSourceGroup,
-                Model model,
-                SourceGroup initialSourceGroup,
-                double initialScore,
-                string fileLabel = "no-label",
-                string path = "./")
-        {
-            string filename = DateTime.Now.ToString("yyyy-mm-dd_hh-mm-ss") + "-" + fileLabel + ".txt";
-            using StreamWriter file = new (path + "/" + filename);
-
-            await file.WriteLineAsync("Real sources' cartesian coordinates:");
-            await file.WriteLineAsync(groundTruthSourceGroup.ToStringCartesian());
-
-            await file.WriteLineAsync("Initial sources' cartesian coordinates:");
-            await file.WriteLineAsync(initialSourceGroup.ToStringCartesian());
-            await file.WriteLineAsync($"Initial score: {initialScore}");
-
-            await file.WriteLineAsync($"Calculated sourses' cartesian coordinates:");
-            await file.WriteLineAsync(model.Group.ToStringCartesian());
-
-            await file.WriteLineAsync($"Final score: {model.Score}");
-            await file.WriteLineAsync($"Number of iterations: {model.IterationsNumber}");
-        }
-
-        public static async Task WriteResultsCsv(
-                SourceGroup groundTruthSourceGroup,
-                Model model,
-                SourceGroup initialSourceGroup,
-                double initialScore,
-                string fileLabel = "no-label",
-                string path = "./")
-        {
-            string filename = DateTime.Now.ToString("yyyy-mm-dd_hh-mm-ss") + "-" + fileLabel + ".csv";
-            using StreamWriter file = new (path + "/" + filename);
-
-            await file.WriteLineAsync("x,y,z,cat,label,");
-
-            foreach (var (idx, source) in groundTruthSourceGroup.Sources.Enumerate(start: 1))
-            {
-                await file.WriteLineAsync($"{source.ToStringCartesianCsv()}A,A{idx},");
-            }
-
-            foreach (var (idx, source) in initialSourceGroup.Sources.Enumerate(start: 1))
-            {
-                await file.WriteLineAsync($"{source.ToStringCartesianCsv()}B,B{idx},");
-            }
-
-            foreach (var (idx, source) in model.Group.Sources.Enumerate(start: 1))
-            {
-                await file.WriteLineAsync($"{source.ToStringCartesianCsv()}C,C{idx},");
-            }
         }
     }
 }
