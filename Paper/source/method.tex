@@ -1,0 +1,426 @@
+\section{Численный метод решения обратных задач}
+
+В качестве численного метода решения обратных задач 1 и 2 в вариационной постановке предлагается использовать градиентный спуск. Минимизировать предстоит функции $\Phi$ и $\Phi_{\Sigma_1}$ соответственно.
+
+На практике удобнее проводить минимизацию не на множестве допустимых векторов $\vect{v}$, задающих декартовы координаты источников, а на множестве соответствующих им векторов из сферических координат $\vect{w}(\vect{v})$, $\rho_i < 1$, $\overline{1,N}$. В соответствии с указанными ранее преобразованиями координат считаем $\rho_i < 1$, $\phi_i \in [0; 2\pi)$, $\theta_i \in [0; \pi]$.
+
+Для определения направления спуска нам потребуются частные производные функций $\Phi$ и $\Phi_{\Sigma_1}$ по сферическим координатам $i$-го источника, $i = \overline{1,N}$; вычислим их для $\Phi$.
+
+Производная по $\rho_i$:
+\begin{flalign}
+	% Header
+	\frac{\partial \Phi}{\partial \rho_i}
+	=&
+	\frac{\partial}{\partial \rho_i} \Phi(\vect{w}; Q) = 
+	\frac{\partial}{\partial \rho_i} \Phi(\rho_1, \phi_1, \theta_1, ..., \rho_i, \phi_i, \theta_i, ..., \rho_n, \phi_n, \theta_n; Q)
+	=&&\nonumber\\[30pt]
+	% First partial
+	=&
+	\frac{\partial}{\partial \rho_i} 
+	\bigg[
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[g(\phi, \theta; \vect{w}) - Q(\phi,\theta)\big]^2 
+	\sin{\theta} \, d\phi \, d\theta
+	\bigg]
+	=&&\nonumber\\[30pt]
+	% External derivative 
+	=&
+	2
+	\cdot
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[g(\phi, \theta; \vect{w}) - Q(\phi,\theta)\big]
+	\cdot
+	\frac{\partial}{\partial \rho_i}
+	g(\phi, \theta; \vect{w})
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	=&&\nonumber\\[30pt]
+	% Internal derivative
+	=&
+	2
+	\cdot
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[g(\phi, \theta; \vect{w}) - Q(\phi,\theta)\big]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\bigg[
+	(-1)
+	\cdot
+	\frac{-2\rho_i K_i(\phi, \theta; \vect{w})^{\tfrac{3}{2}}
+		-
+		(1 - \rho_i^2)
+		\cdot
+		\tfrac{3}{2}
+		K_i(\phi, \theta; \vect{w})^{\tfrac{1}{2}}
+		\cdot
+		\frac{\partial}{\partial \rho_i}
+		K_i(\phi, \theta; \vect{w})
+	}
+	{K_i(\phi, \theta; \vect{w})^3}
+	\bigg]
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	=&&\nonumber\\[30pt]
+	% Reduction
+	=&
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[g(\phi, \theta; \vect{w}) - Q(\phi,\theta)\big]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\frac{4 \rho_i K_i(\phi, \theta; \vect{w})
+		+ 3 (1 - \rho_i^2)
+		\big[
+		2\rho_i - 2
+		(\cos(\phi - \phi_i)\sin\theta\sin\theta_i + \cos\theta\cos\theta_i)
+		\big]}
+	{K_i(\phi, \theta; \vect{w})^{\tfrac{5}{2}}}
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	=&&\nonumber\\[30pt]
+	% Final
+	=&
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[
+	g(\phi, \theta; \vect{w})
+	- Q(\phi,\theta)
+	\big]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\bigg[
+	\frac{4\rho_i}{K_i(\phi, \theta; \vect{w})^{\tfrac{3}{2}}}
+	+
+	6 \cdot
+	\frac{(1 - \rho_i^2)
+		\big[
+		\rho_i - (\cos(\phi - \phi_i)\sin\theta\sin\theta_i + \cos\theta\cos\theta_i)
+		\big]}
+	{K_i(\phi, \theta; \vect{w})^{\tfrac{5}{2}}}
+	\bigg]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\sin{\theta} \, d\phi \, d\theta
+	\text{.}&&
+\end{flalign}
+
+Производная по $\phi_i$:
+\begin{flalign}
+	% Header
+	\frac{\partial \Phi}{\partial \phi_i}
+	=&
+	\frac{\partial}{\partial \phi_i} \Phi(\vect{w}; Q) = 
+	\frac{\partial}{\partial \phi_i} \Phi(\rho_1, \phi_1, \theta_1, ..., \rho_i, \phi_i, \theta_i, ..., \rho_n, \phi_n, \theta_n; Q)
+	=&&\nonumber\\[30pt]
+	% First partial
+	=&
+	\frac{\partial}{\partial \phi_i} 
+	\bigg[
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[g(\phi, \theta; \vect{w}) - Q(\phi,\theta)\big]^2 
+	\sin{\theta} \, d\phi \, d\theta
+	\bigg]
+	=&&\nonumber\\[30pt]
+	% External derivative 
+	=&
+	2 \cdot
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[g(\phi, \theta; \vect{w}) - Q(\phi,\theta)\big]
+	\cdot
+	\frac{\partial}{\partial \phi_i}
+	g(\phi, \theta; \vect{w})
+	\sin{\theta} \, d\phi \, d\theta
+	=&&\nonumber\\[30pt]
+	% Internal derivative
+	=&
+	2 \cdot
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[g(\phi, \theta; \vect{w}) - Q(\phi,\theta)\big]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\bigg[
+	(-1)
+	\cdot
+	\frac{
+		-
+		(1 - \rho_i^2)
+		\cdot
+		\tfrac{3}{2}
+		K_i(\phi, \theta; \vect{w})^{\tfrac{1}{2}}
+		\cdot
+		\frac{\partial}{\partial \phi_i}
+		K_i(\phi, \theta; \vect{w})
+	}
+	{K_i(\phi, \theta; \vect{w})^3}
+	\bigg]
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	=&&\nonumber\\[30pt]
+	% Reduction
+	=&
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[g(\phi, \theta; \vect{w}) - Q(\phi,\theta)\big]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\frac{3 (1 - \rho_i^2)( - 2 \rho_i
+		\sin(\phi - \phi_i)\sin\theta\sin\theta_i
+		)}
+	{K_i(\phi, \theta; \vect{w})^{\tfrac{5}{2}}}
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	=&&\nonumber\\[30pt]
+	% Final
+	=&
+	-6
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[
+	g(\phi, \theta; \vect{w})
+	- Q(\phi,\theta)
+	\big]
+	\cdot
+	\bigg[
+	\frac{(1 - \rho_i^2)\rho_i\sin(\phi - \phi_i)\sin{\theta}\sin{\theta_i}}
+	{K_i(\phi, \theta; \vect{w})^{\tfrac{5}{2}}}
+	\bigg]
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	\text{.}&&
+\end{flalign}
+
+Производная по $\theta_i$:
+\begin{flalign}
+	% Header
+	\frac{\partial \Phi}{\partial \theta_i}
+	=&
+	\frac{\partial}{\partial \theta_i} \Phi(\vect{w}; Q) = 
+	\frac{\partial}{\partial \theta_i} \Phi(\rho_1, \phi_1, \theta_1, ..., \rho_i, \phi_i, \theta_i, ..., \rho_n, \phi_n, \theta_n; Q)
+	=&&\nonumber\\[30pt]
+	% First partial
+	=&
+	\frac{\partial}{\partial \theta_i} 
+	\bigg[
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[g(\phi, \theta; \vect{w}) - Q(\phi,\theta)\big]^2 
+	\sin\theta \, d\phi \, d\theta
+	\bigg]
+	=&&\nonumber\\[30pt]
+	% External derivative 
+	=&
+	2 \cdot
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[g(\phi, \theta; \vect{w}) - Q(\phi,\theta)\big]
+	\cdot
+	\frac{\partial}{\partial \theta_i}
+	g(\phi, \theta; \vect{w})
+	\sin{\theta} \, d\phi \, d\theta
+	=&&\nonumber\\[30pt]
+	% Internal derivative
+	=&
+	2 \cdot
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[g(\phi, \theta; \vect{w}) - Q(\phi,\theta)\big]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\bigg[
+	(-1)
+	\cdot
+	\frac{
+		-
+		(1 - \rho_i^2)
+		\cdot
+		\tfrac{3}{2}
+		K_i(\phi, \theta; \vect{w})^{\tfrac{1}{2}}
+		\cdot
+		\frac{\partial}{\partial \theta_i}
+		K_i(\phi, \theta; \vect{w})
+	}
+	{K_i(\phi, \theta; \vect{w})^3}
+	\bigg]
+	\cdot
+	\sin\theta \, d\phi \, d\theta
+	=&&\nonumber\\[30pt]
+	% Reduction
+	=&
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[g(\phi, \theta; \vect{w}) - Q(\phi,\theta)\big]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\frac{3 (1 - \rho_i^2)
+		\big[
+		-2\rho_i
+		(\cos(\phi - \phi_i)\sin\theta\cos\theta_i
+		-
+		\cos\theta\sin\theta_i)
+		\big]}
+	{K_i(\phi, \theta; \vect{w})^{\tfrac{5}{2}}}
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	=&&\nonumber\\[30pt]
+	% Final
+	=&
+	-6
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[
+	g(\phi, \theta; \vect{w})
+	- Q(\phi,\theta)
+	\big]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\bigg[
+	\frac{(1 - \rho_i^2)
+		\rho_i(\cos(\phi - \phi_i)\sin\theta\cos\theta_i - \cos\theta\sin\theta_i)}
+	{K_i(\phi, \theta; \vect{w})^{\tfrac{5}{2}}}
+	\bigg]
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	\text{.}&&
+\end{flalign}
+
+\newpage
+\textbf{Итоговые частные производные функции $\Phi$:}
+\begin{flalign}
+	% Header
+	\frac{\partial \Phi}{\partial \rho_i}
+	=&
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[
+	g(\phi, \theta; \vect{w})
+	- Q(\phi,\theta)
+	\big] \cdot
+	\bigg[
+	\frac{4\rho_i}{K_i(\phi, \theta; \vect{w})^{\tfrac{3}{2}}}
+	+&&\nonumber\\[10pt]
+	+&
+	6 \cdot
+	\frac{(1 - \rho_i^2)
+		\big[
+		\rho_i - (\cos(\phi - \phi_i)\sin\theta\sin\theta_i + \cos\theta\cos\theta_i)
+		\big]}
+	{K_i(\phi, \theta; \vect{w})^{\tfrac{5}{2}}}
+	\bigg]
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	\text{,}&&
+\end{flalign}
+\begin{flalign}
+	% Header
+	\frac{\partial \Phi}{\partial \phi_i}
+	=&
+	-6
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[
+	g(\phi, \theta; \vect{w})
+	- Q(\phi,\theta)
+	\big]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\bigg[
+	\frac{(1 - \rho_i^2)\rho_i\sin(\phi - \phi_i)\sin{\theta}\sin{\theta_i}}
+	{K_i(\phi, \theta; \vect{w})^{\tfrac{5}{2}}}
+	\bigg]
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	\text{,}&&
+\end{flalign}
+\begin{flalign}
+	% Header
+	\frac{\partial \Phi}{\partial \theta_i}
+	=&
+	-6
+	\int\limits_{0}^{2\pi}\int\limits_{0}^{\pi}
+	\big[
+	g(\phi, \theta; \vect{w})
+	- Q(\phi,\theta)
+	\big]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\bigg[
+	\frac{(1 - \rho_i^2)
+		\rho_i(\cos(\phi - \phi_i)\sin\theta\cos\theta_i - \cos\theta\sin\theta_i)}
+	{K_i(\phi, \theta; \vect{w})^{\tfrac{5}{2}}}
+	\bigg]
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	\text{.}&&
+\end{flalign}
+
+Частные производные функции $\Phi_{\Sigma_1}$ вычисляются аналогично, поэтому приведём лишь итоговые формулы:
+\begin{flalign}
+	% Header
+	\frac{\partial \Phi_{\Sigma_1}}{\partial \rho_i}
+	=&
+	\int\limits_{\phi_1}^{\phi_2}\int\limits_{\theta_1}^{\theta_2}
+	\big[
+	g(\phi, \theta; \vect{w})
+	- Q(\phi,\theta)
+	\big] \cdot
+	\bigg[
+	\frac{4\rho_i}{K_i(\phi, \theta; \vect{w})^{\tfrac{3}{2}}}
+	+&&\nonumber\\[10pt]
+	+&
+	6 \cdot
+	\frac{(1 - \rho_i^2)
+		\big[
+		\rho_i - (\cos(\phi - \phi_i)\sin\theta\sin\theta_i + \cos\theta\cos\theta_i)
+		\big]}
+	{K_i(\phi, \theta; \vect{w})^{\tfrac{5}{2}}}
+	\bigg]
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	\text{,}&&
+\end{flalign}
+\begin{flalign}
+	% Header
+	\frac{\partial \Phi_{\Sigma_1}}{\partial \phi_i}
+	=&
+	-6
+	\int\limits_{\phi_1}^{\phi_2}\int\limits_{\theta_1}^{\theta_2}
+	\big[
+	g(\phi, \theta; \vect{w})
+	- Q(\phi,\theta)
+	\big]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\bigg[
+	\frac{(1 - \rho_i^2)\rho_i\sin(\phi - \phi_i)\sin{\theta}\sin{\theta_i}}
+	{K_i(\phi, \theta; \vect{w})^{\tfrac{5}{2}}}
+	\bigg]
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	\text{,}&&
+\end{flalign}
+\begin{flalign}
+	% Header
+	\frac{\partial \Phi_{\Sigma_1}}{\partial \theta_i}
+	=&
+	-6
+	\int\limits_{\phi_1}^{\phi_2}\int\limits_{\theta_1}^{\theta_2}
+	\big[
+	g(\phi, \theta; \vect{w})
+	- Q(\phi,\theta)
+	\big]
+	\cdot&&\nonumber\\[10pt]
+	\cdot&
+	\bigg[
+	\frac{(1 - \rho_i^2)
+		\rho_i(\cos(\phi - \phi_i)\sin\theta\cos\theta_i - \cos\theta\sin\theta_i)}
+	{K_i(\phi, \theta; \vect{w})^{\tfrac{5}{2}}}
+	\bigg]
+	\cdot
+	\sin{\theta} \, d\phi \, d\theta
+	\text{.}&&
+\end{flalign}
+
+Опишем применение градиентного метода для решения задачи минимизации функции.
+
+
+
+Градиентный спуск будем осуществлять следующим образом: вычислив для очередного приближения координат $\vect{v}_k$, $k=1,2,...$ градиент $\nabla \Phi$ ($\nabla \Phi_{\Sigma_1}$), будем дробить по степеням двойки шаг в противоположном направлении до тех пор, пока получаемое приближение $\vect{v}_{k+1}$ не даст меньшее значение функции $\Phi$ ($\Phi_{\Sigma_1}$), чем текущее приближение.
+
+Данный процесс повторяется, пока функция $\Phi$ ($\Phi_{\Sigma_1}$) не примет значение ниже порогового либо пока изменение координат $\Delta \vect{v}_k = \vect{v}_{k+1} - \vect{v}_k$ не станет слишком мало по норме.
+
+\[
+\vect{w}_k = \vect{w}_{k - 1} - \alpha_k \nabla \Phi(\vect{w}; Q)
+\]
+
+\[
+\left\lVert \vect{w}_k - \vect{w}_{k - 1} \right\lVert < \varepsilon
+\]

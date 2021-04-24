@@ -1,0 +1,98 @@
+\documentclass[oneside,final,12pt]{article}
+\usepackage[a4paper]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{indentfirst}
+\usepackage{parskip}
+\usepackage{graphicx}
+\usepackage[nottoc]{tocbibind}
+\usepackage{empheq}
+\usepackage{array}
+% \usepackage{showframe}
+
+\geometry{
+	a4paper,onecolumn,
+	left=30mm,top=20mm,right=15mm,bottom=30mm,foot=10mm,
+	nohead,nomarginpar
+}
+
+\graphicspath{ {../images} }
+
+%\setpapersize{A4}
+%\setmarginsrb{3cm}{2cm}{1.5cm}{2cm}{0pt}{0mm}{0pt}{13mm}
+% \sloppy
+\fussy
+\allowdisplaybreaks
+
+\newtheorem{theorem}{Теорема}[section]
+\newtheorem{corollary}{Следствие}[theorem]
+\newtheorem{lemma}[theorem]{Лемма}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Опр.}[section]
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\vect}[1]{\boldsymbol{\overline{#1}}}
+\DeclareMathOperator*{\argmax}{argmax}
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\grad}{grad}
+\DeclareMathOperator*{\im}{Im}
+\renewcommand\qedsymbol{$\blacksquare$}
+
+\setlength{\parskip}{1.25em}
+\setlength{\parindent}{0cm}
+\renewcommand{\baselinestretch}{1.5}
+
+
+\begin{document}
+	
+	\include{title}
+	
+	\tableofcontents
+	\pagebreak
+	
+	%------------------------------Section------------------------------
+	\include{introduction}
+	
+	%------------------------------Section------------------------------
+	\include{problem}
+	
+	%------------------------------Section------------------------------
+	\include{reduction}
+	
+	%------------------------------Section------------------------------
+	\include{method}
+	
+	%------------------------------Section------------------------------
+	\include{results}
+	
+	%------------------------------Section------------------------------
+	\include{conclusion}
+	
+	%------------------------------Section------------------------------
+	\newpage
+	\begin{thebibliography}{99}
+		\bibitem{vladimirov}
+		В.\,С.\,Владимиров, Уравнения математической физики, Изд. IV, Наука, М., 1981
+		\bibitem{tikh}
+		А.\,Н.\,Тихонов, А.\,А.\,Самарский, Уравнения математической физики: Учеб. пособие. --- 6-е~изд., испр.~и~доп. --- М.:~Изд-во~МГУ,~1999
+		\bibitem{den}
+		А.\,М.\,Денисов, Введение в теорию обратных задач: Учеб. пособие. ---\\
+		М.:~Изд-во~МГУ,~1994
+		\bibitem{prilepko}
+		А.\,И.\,Прилепко, Об единственности определения формы тела по значениям внешнего потенциала --- Докл.~АН~СССР, 1965, Т.\,160,~№\,1. С.~40--43
+		\bibitem{model}
+		Н.\,Н.\,Голованов, Геометрическое моделирование. --— М.: Издательство Физико-математической литературы, 2002, C.~417
+		\bibitem{zakh_1}
+		Е.\,В.\,Захаров, Ю.\,М.\,Коптелов, О решении одной задачи математической обработки электроэнцефалографических данных, Докл.~АН СССР, 292:3 (1987), 576–581
+		\bibitem{zakh_2}
+		Е.\,В.\,Захаров, Р.\,Е.\,Зимоздра, О границах применимости сферической модели для решения задач электроэнцефалографии, Вестн. Моск. Ун-та, Сер. 15, Вычисл. Матем. и Киберн., 2014, №3
+		\bibitem{hadamard}
+		J.\, Hadamard, Sur les problèmes aux dérivées partielles et leur signification physique, Princeton University Bulletin, 1902
+		
+	\end{thebibliography}
+\end{document}
