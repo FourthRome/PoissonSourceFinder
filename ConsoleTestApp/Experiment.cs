@@ -178,7 +178,7 @@
             SourceGroup groundTruthSourceGroup = SourceGroupKeys["GroundTruthSourceGroup"];
 
             // Open file
-            string filename = DateTime.Now.ToString("yyyy-mm-dd_hh-mm-ss") + "-" + experimentLabel + ".txt";
+            string filename = DateTime.Now.ToString("yyyy-MM-dd__HH-mm-ss") + "-" + experimentLabel + ".txt";
             using StreamWriter file = new (path + "/" + filename);
 
             // Write contents

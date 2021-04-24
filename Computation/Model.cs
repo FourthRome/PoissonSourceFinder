@@ -27,11 +27,11 @@
 
         public double BiggestRho { get; set; } // Upper boundary for sources' coordinates
 
-        public double ErrorMargin { get; set; } // When to stop minimizing loss function
+        public double ScoreValueStoppingCondition { get; set; } // When to stop minimizing loss function
 
-        public double MoveStopMargin { get; set; } // If step is smaller than this, it's time to stop
+        public double ScoreImprovementStoppingCondition { get; set; } // If step is smaller than this, it's time to stop
 
-        public double LossStopMargin { get; set; } // If loss changed less than this, it's time to stop
+        public double MoveNormStoppingCondition { get; set; } // If loss changed less than this, it's time to stop
 
         public double Score { get; private set; }
 
@@ -50,9 +50,9 @@
             Func<double, double, double, double> groundTruthNormalDerivative,
             double smallestRho,
             double biggestRho,
-            double errorMargin,
-            double lossStopMargin,
-            double moveStopMargin,
+            double scoreValueStoppingCondition,
+            double scoreImprovementStoppingCondition,
+            double moveNormStoppingCondition,
             int sourceAmount = 0,
             SourceGroup startingGroup = null)
         {
@@ -61,13 +61,12 @@
             GroundTruthNormalDerivative = groundTruthNormalDerivative;
             SmallestRho = smallestRho;
             BiggestRho = biggestRho;
-            ErrorMargin = errorMargin;
-            MoveStopMargin = moveStopMargin;
-            LossStopMargin = lossStopMargin;
+            ScoreValueStoppingCondition = scoreValueStoppingCondition;
+            ScoreImprovementStoppingCondition = scoreImprovementStoppingCondition;
+            MoveNormStoppingCondition = moveNormStoppingCondition;
             IterationsNumber = 0;
 
             // Initialize sources and Score
-
             if (startingGroup != null)
             {
                 Group = startingGroup;
@@ -224,7 +223,7 @@
         public void SearchForSources()
         {
             int stepCount = 0;
-            while (Score > ErrorMargin)
+            while (Score > ScoreValueStoppingCondition)
             {
                 stepCount += 1;
                 IterationsNumber += 1;
@@ -244,7 +243,7 @@
                 InvokeModelEvent("Coordinates", Group);
 
                 // TODO: make this less ugly
-                if (Math.Abs(oldScore - Score) < LossStopMargin)
+                if (Math.Abs(oldScore - Score) < ScoreImprovementStoppingCondition)
                 {
                     InvokeModelEvent($"Functional does not change significantly; halting calculations after step {stepCount}");
                     break;
@@ -254,7 +253,7 @@
                 double moveNorm = SourceGroup.DistanceBetween(Group, oldGroup);
                 InvokeModelEvent($"Move's square norm: {moveNorm}");
 
-                if (moveNorm < MoveStopMargin)
+                if (moveNorm < MoveNormStoppingCondition)
                 {
                     InvokeModelEvent($"Steps became too small; halting calculations after step {stepCount}");
                     break;
