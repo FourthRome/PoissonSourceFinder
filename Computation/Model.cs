@@ -46,15 +46,15 @@
         // Constructors
         //-------------
         public Model(
-            SphericalGrid grid,
-            Func<double, double, double, double> groundTruthNormalDerivative,
-            double smallestRho,
-            double biggestRho,
-            double scoreValueStoppingCondition,
-            double scoreImprovementStoppingCondition,
-            double moveNormStoppingCondition,
-            int sourceAmount = 0,
-            SourceGroup startingGroup = null)
+                SphericalGrid grid,
+                Func<double, double, double, double> groundTruthNormalDerivative,
+                double smallestRho,
+                double biggestRho,
+                double scoreValueStoppingCondition,
+                double scoreImprovementStoppingCondition,
+                double moveNormStoppingCondition,
+                int sourceAmount = 0,
+                SourceGroup startingGroup = null)
         {
             // Plain old initialization
             Grid = grid;
@@ -88,14 +88,15 @@
 
         public Point[] GetAllInitialSources()
         {
+            double radius = Grid.Radius;
             return new Point[] // TODO: Make this a) smarter and b) not hard-coded
             {
-                (0.5, 0.0, 0.0),
-                (-0.5, 0.0, 0.0),
-                (0.0, 0.5, 0.0),
-                (0.0, -0.5, 0.0),
-                (0.0, 0.0, 0.5),
-                (0.0, 0.0, -0.5),
+                (0.5 * radius, 0.0, 0.0),
+                (-0.5 * radius, 0.0, 0.0),
+                (0.0, 0.5 * radius, 0.0),
+                (0.0, -0.5 * radius, 0.0),
+                (0.0, 0.0, 0.5 * radius),
+                (0.0, 0.0, -0.5 * radius),
                 (0.0, 0.0, 0.0),
             };
         }
