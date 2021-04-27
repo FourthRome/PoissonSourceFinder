@@ -206,7 +206,7 @@
                     reductionCount += 1;
                 }
 
-                if (reductionCount > 20)
+                if (reductionCount > 40)
                 {
                     InvokeModelEvent($"Stopping reduction: too many steps"); // Output
                     break;
