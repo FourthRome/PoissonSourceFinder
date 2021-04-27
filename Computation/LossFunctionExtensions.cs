@@ -80,6 +80,9 @@
             {
                 return Math.Pow(groundTruthNormalDerivative(rho, phi, theta) - group.NormalDerivative(rho, phi, theta), 2) *
                     Math.Pow(rho, 2) * Math.Sin(theta);
+
+                // TODO: Check which of the two calculations is correct
+                //return Math.Pow(groundTruthNormalDerivative(rho, phi, theta) - group.NormalDerivative(rho, phi, theta), 2);
             });
         }
 
