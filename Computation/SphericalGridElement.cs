@@ -21,10 +21,15 @@
 
         public (double, double) CentralNode { get; protected set; }
 
+        //---------------------
+        // Protected properties
+        //---------------------
+        protected double Radius { get; set; }
+
         //-------------
         // Constructors
         //-------------
-        public SphericalGridElement(SPHERICAL_GRID_TYPE type, (double, double)[] borderNodes)
+        public SphericalGridElement(SPHERICAL_GRID_TYPE type, (double, double)[] borderNodes, double radius = 1.0)
         {
             Type = type;
             BorderNodes = borderNodes;
@@ -32,6 +37,7 @@
             //Array.Copy(borderNodes, BorderNodes, borderNodes.Length);
             Square = GetSquare(this);
             CentralNode = GetCentralNode(this);
+            Radius = radius;
         }
 
         //-----------------------
@@ -51,7 +57,7 @@
                     rightPhi += 2 * Math.PI;
                 }
 
-                result = (rightPhi - leftPhi) * (Math.Cos(smallerTheta) - Math.Cos(biggerTheta));
+                result = element.Radius * (rightPhi - leftPhi) * (Math.Cos(smallerTheta) - Math.Cos(biggerTheta));
             }
 
             return result;
