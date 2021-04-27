@@ -204,7 +204,7 @@
             SourceGroup groundTruthSourceGroup = SourceGroupKeys["GroundTruthSourceGroup"];
 
             // Open file
-            string filename = DateTime.Now.ToString("yyyy-mm-dd_hh-mm-ss") + "-" + experimentLabel + ".csv";
+            string filename = DateTime.Now.ToString("yyyy-MM-dd__HH-mm-ss") + "-" + experimentLabel + ".csv";
             using StreamWriter file = new (path + "/" + filename);
 
             // Write contents
