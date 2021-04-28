@@ -2,59 +2,19 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
     using System.Threading.Tasks;
     using Computation;
-    using Contracts;
 
     public class Program
     {
+        //----------------------
+        // Public static methods
+        //----------------------
         public static async Task Main()
         {
-            //--------------------------------------
-            // Set up part of the sphere's surface S
-            //--------------------------------------
-            //SphericalSurface surface = new (radius);
-
-            //// Full sphere
-            //surface.AddAzimuthalRange(0.0, 2 * Math.PI);
-            //surface.AddPolarRange(0, Math.PI);
-
-            //// Hemisphere x > 0
-            //surface.AddAzimuthalRange(0, Math.PI / 2);
-            //surface.AddAzimuthalRange(3 * Math.PI / 2, 2 * Math.PI);
-            //surface.AddPolarRange(0, Math.PI);
-
-            //// Hemisphere x < 0
-            //surface.AddAzimuthalRange(Math.PI / 2, 3 * Math.PI / 2);
-            //surface.AddPolarRange(0, Math.PI);
-
-            //// Hemisphere y > 0
-            //surface.AddAzimuthalRange(0, Math.PI);
-            //surface.AddPolarRange(0, Math.PI);
-
-            //// Hemisphere y < 0
-            //surface.AddAzimuthalRange(Math.PI, 2 * Math.PI);
-            //surface.AddPolarRange(0, Math.PI);
-
-            //// Hemisphere z > 0
-            //surface.AddAzimuthalRange(0, 2 * Math.PI);
-            //surface.AddPolarRange(0, Math.PI / 2);
-
-            //// Hemisphere z < 0
-            //surface.AddAzimuthalRange(0, 2 * Math.PI);
-            //surface.AddPolarRange(Math.PI / 2, Math.PI);
-
-            //// Eighth of a sphere x > 0, y > 0, z > 0
-            //surface.AddAzimuthalRange(0, Math.PI / 2);
-            //surface.AddPolarRange(0, Math.PI / 2);
-
-            //// Eighth of a sphere x < 0, y < 0, z < 0
-            //surface.AddAzimuthalRange(Math.PI, 3 * Math.PI / 2);
-            //surface.AddPolarRange(Math.PI / 2, Math.PI);
-
-            // TODO: now that's a little better...
+            //---------------------------------
+            // SourceGroups for the experiments
+            //---------------------------------
             SourceGroup twoGroup = new (
                 new Point[]
                 {
@@ -70,52 +30,40 @@
                     (-0.7, -0.3, -0.4),
                 });
 
-            SphericalSurface fullSphere = new (
-                1.0,
-                new () { (0.0, 2 * Math.PI), },
-                new () { (0.0, Math.PI), });
-
-            SphericalSurface xPositiveSphere = new (
-                1.0,
-                new ()
-                {
-                    (0.0, Math.PI / 2),
-                    (3 * Math.PI / 2, 2 * Math.PI),
-                },
-                new () { (0.0, Math.PI), });
-
-            SphericalSurface zPositiveSphere = new (
-                1.0,
-                new () { (0.0, 2 * Math.PI), },
-                new () { (0.0, Math.PI / 2), });
-
+            //-----------------------
+            // Setting up experiments
+            //-----------------------
+            // Settings for the whole series
             List<Experiment> experiments = new ();
+            int experimentNumber = 1;
+            string seriesLabel = "NewAPI";
 
+            // Settings for specific experiments
             experiments.Add(new (
                 new ()
                 {
                     { "GroundTruthSourceGroup", twoGroup },
-                    { "Surface", fullSphere },
+                    { "Surface", UnitSurfaces["full"] },
                     { "MoveNormStoppingCondition", 1e-4 },
-                    { "ExperimentLabel", "Mistake-1" },
+                    { "ExperimentLabel", $"{seriesLabel}-{experimentNumber++}" },
                 }));
 
             experiments.Add(new (
                 new ()
                 {
                     { "GroundTruthSourceGroup", twoGroup },
-                    { "Surface", zPositiveSphere },
+                    { "Surface", UnitSurfaces["zPositive"] },
                     { "MoveNormStoppingCondition", 1e-4 },
-                    { "ExperimentLabel", "Mistake-2" },
+                    { "ExperimentLabel", $"{seriesLabel}-{experimentNumber++}" },
                 }));
 
             experiments.Add(new (
                 new ()
                 {
                     { "GroundTruthSourceGroup", threeGroup },
-                    { "Surface", fullSphere },
+                    { "Surface", UnitSurfaces["full"] },
                     { "MoveNormStoppingCondition", 1e-7 },
-                    { "ExperimentLabel", "Mistake-3" },
+                    { "ExperimentLabel", $"{seriesLabel}-{experimentNumber++}" },
                 }));
 
             // TODO: make this sequential execution logic clearer
@@ -126,5 +74,64 @@
 
             Console.ReadLine();
         }
+
+        //----------------------
+        // Private static fields
+        //----------------------
+        // TODO: find a better way to cache this information for common usage patterns
+        private static readonly double UnitRadius = 1.0;
+
+        private static readonly Dictionary<string, SphericalSurface> UnitSurfaces = new ()
+        {
+            {
+                "full",
+                new SphericalSurface(
+                    UnitRadius,
+                    new () { (0.0, 2 * Math.PI) },
+                    new () { (0.0, Math.PI) })
+            },
+            {
+                "xPositive",
+                new SphericalSurface(
+                    UnitRadius,
+                    new () { (0.0, Math.PI / 2), (3 * Math.PI / 2, 2 * Math.PI) },
+                    new () { (0.0, Math.PI) })
+            },
+            {
+                "xNegative",
+                new SphericalSurface(
+                    UnitRadius,
+                    new () { (Math.PI / 2, 3 * Math.PI / 2) },
+                    new () { (0.0, Math.PI) })
+            },
+            {
+                "yPositive",
+                new SphericalSurface(
+                    UnitRadius,
+                    new () { (0.0, Math.PI) },
+                    new () { (0.0, Math.PI) })
+            },
+            {
+                "yNegative",
+                new SphericalSurface(
+                    UnitRadius,
+                    new () { (Math.PI, 2 * Math.PI) },
+                    new () { (0.0, Math.PI) })
+            },
+            {
+                "zPositive",
+                new SphericalSurface(
+                    UnitRadius,
+                    new () { (0.0, 2 * Math.PI) },
+                    new () { (0.0, Math.PI / 2) })
+            },
+            {
+                "zNegative",
+                new SphericalSurface(
+                    UnitRadius,
+                    new () { (0.0, 2 * Math.PI) },
+                    new () { (Math.PI / 2, Math.PI) })
+            },
+        };
     }
 }
