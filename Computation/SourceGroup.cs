@@ -81,6 +81,18 @@
             return builder.ToString();
         }
 
+        public string ToStringCartesianCsv(string category = "", bool noLabels = false)
+        {
+            StringBuilder builder = new();
+
+            foreach (var (idx, source) in Sources.Enumerate(start: 1))
+            {
+                builder.Append(source.ToStringCartesianCsv() + $"{category},{(noLabels ? string.Empty : category + idx.ToString())},\n");
+            }
+
+            return builder.ToString();
+        }
+
         // IEnumerable details
         IEnumerator IEnumerable.GetEnumerator()
         {
