@@ -33,11 +33,12 @@
         {
             Type = type;
             BorderNodes = borderNodes;
+            // TODO: check if there's a need for copying
             //BorderNodes = new (double, double)[borderNodes.Length];
             //Array.Copy(borderNodes, BorderNodes, borderNodes.Length);
+            Radius = radius;
             Square = GetSquare(this);
             CentralNode = GetCentralNode(this);
-            Radius = radius;
         }
 
         //-----------------------
