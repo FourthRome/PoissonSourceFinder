@@ -13,13 +13,7 @@
         //------------------
         // Public properties
         //------------------
-        public Dictionary<string, double> DoubleKeys { get; protected set; }
-
-        public Dictionary<string, SourceGroup> SourceGroupKeys { get; protected set; }
-
-        public Dictionary<string, SphericalSurface> SphericalSurfaceKeys { get; protected set; }
-
-        public Dictionary<string, string> StringKeys { get; protected set; }
+        public Dictionary<string, object> Properties { get; set; }
 
         public SphericalGrid Grid { get; protected set; }
 
@@ -34,26 +28,12 @@
         //-------------
         // Constructors
         //-------------
-        public Experiment(
-                Dictionary<string, SourceGroup> sourceGroupKeys,
-                Dictionary<string, SphericalSurface> sphericalSurfaceKeys = null,
-                Dictionary<string, double> doubleKeys = null,
-                Dictionary<string, string> stringKeys = null)
+        public Experiment(Dictionary<string, object> properties)
         {
-            // TODO: is this really the best interface possible? I'm pretty much sure there's a cleaner solution
-            // to this "too many parameters" problem
-
-            // Keys' groups with some defaults should be initialized with defaults first
-            InitializeKeysWithDefaults();
-
-            // Keys' initialization from constructor's parameters
-            DoubleKeys.MergeInPlace(doubleKeys); // For this syntax see GeneralExtensions.cs
-            StringKeys.MergeInPlace(stringKeys);
-            SphericalSurfaceKeys.MergeInPlace(sphericalSurfaceKeys);
-            SourceGroupKeys.MergeInPlace(sourceGroupKeys);
-
-            // Check that we're all set
-            CheckKeysValidity();
+            // TODO: now that's a lot better, but can it be even clearer? I mean API for providing properties of experiments
+            SetDefaultProperties(); // Properties with defaults should be initialized before being (possibly) owerwritten
+            Properties.MergeInPlace(properties); // For this syntax see GeneralExtensions.cs
+            CheckPropertiesValidity();
             Prepare();
         }
 
@@ -77,7 +57,7 @@
             Console.WriteLine();
 
             Console.WriteLine($"Sources' real coordinates:");
-            Console.WriteLine(SourceGroupKeys["GroundTruthSourceGroup"]);
+            Console.WriteLine((SourceGroup)Properties["GroundTruthSourceGroup"]);
             Console.WriteLine();
 
             Console.WriteLine($"Sources' calculated coordinates:");
@@ -108,9 +88,9 @@
         //------------------
         // Protected methods
         //------------------
-        protected void InitializeKeysWithDefaults()
+        protected void SetDefaultProperties()
         {
-            DoubleKeys = new Dictionary<string, double>()
+            Properties = new Dictionary<string, object>()
             {
                 { "Radius", 1.0 },
                 { "AzimuthalStep", 1e-2 },
@@ -121,50 +101,51 @@
                 { "ScoreImprovementStoppingCondition", 0.0 },
                 { "MoveNormStoppingCondition", 0.0 },
                 { "Delta", 0.0 },
-            };
-
-            StringKeys = new Dictionary<string, string>()
-            {
                 { "ExperimentLabel", "no-label" },
                 { "ResultsPath", "../../../../Results" },
-            };
-
-            SphericalSurfaceKeys = new Dictionary<string, SphericalSurface>()
-            {
-                { "Surface", new SphericalSurface(DoubleKeys["Radius"]) },
-            };
-            SphericalSurfaceKeys["Surface"].AddAzimuthalRange(0.0, 2 * Math.PI);
-            SphericalSurfaceKeys["Surface"].AddPolarRange(0.0, Math.PI);
-
-            SourceGroupKeys = new Dictionary<string, SourceGroup>()
-            {
                 { "InitialSourceGroup", null },
             };
+
+            Properties.Add(
+                "Surface",
+                new SphericalSurface(
+                    (double)Properties["Radius"],
+                    new () { (0.0, 2 * Math.PI), },
+                    new () { (0.0, Math.PI), }));
         }
 
-        protected void CheckKeysValidity()
+        protected void CheckPropertiesValidity()
         {
             // TODO: Here's the most basic check, it should be expanded for various input
-            if (!SourceGroupKeys.ContainsKey("GroundTruthSourceGroup"))
+            if (!Properties.ContainsKey("GroundTruthSourceGroup"))
             {
-                throw new ArgumentException("Experiment should be provided with a 'GroundTruthSourceGroup' key in 'sourceGroupKeys'");
+                throw new ArgumentException("Experiment should be provided with a 'GroundTruthSourceGroup' key in 'properties' constructor argument");
             }
         }
 
         protected void Prepare()
         {
-            Grid = new RectangularSphericalGrid(SphericalSurfaceKeys["Surface"], DoubleKeys["AzimuthalStep"], DoubleKeys["PolarStep"]);
-            GroundTruth = new (SourceGroupKeys["GroundTruthSourceGroup"], Grid, DoubleKeys["Delta"]);
+            Grid = new RectangularSphericalGrid(
+                    (SphericalSurface)Properties["Surface"],
+                    (double)Properties["AzimuthalStep"],
+                    (double)Properties["PolarStep"]);
+
+            GroundTruth = new (
+                    (SourceGroup)Properties["GroundTruthSourceGroup"],
+                    Grid,
+                    (double)Properties["Delta"]);
+
             Model = new (
                 Grid,
                 GroundTruth.CachedNormalDerivative,
-                DoubleKeys["SmallestRho"],
-                DoubleKeys["BiggestRho"],
-                DoubleKeys["ScoreValueStoppingCondition"],
-                DoubleKeys["ScoreImprovementStoppingCondition"],
-                DoubleKeys["MoveNormStoppingCondition"],
-                SourceGroupKeys["GroundTruthSourceGroup"].SourceAmount,
-                SourceGroupKeys["InitialSourceGroup"]);
+                (double)Properties["SmallestRho"],
+                (double)Properties["BiggestRho"],
+                (double)Properties["ScoreValueStoppingCondition"],
+                (double)Properties["ScoreImprovementStoppingCondition"],
+                (double)Properties["MoveNormStoppingCondition"],
+                ((SourceGroup)Properties["GroundTruthSourceGroup"]).SourceAmount,
+                (SourceGroup)Properties["InitialSourceGroup"]);
+
             InitialSourceGroup = Model.Group;
             InitialScore = Model.Score;
             Model.ModelEvent += ModelEventCallback;
@@ -173,9 +154,9 @@
         protected async Task WriteResultsTxt()
         {
             // Make aliases for some keys (so that code is more readable)
-            string experimentLabel = StringKeys["ExperimentLabel"];
-            string path = StringKeys["ResultsPath"];
-            SourceGroup groundTruthSourceGroup = SourceGroupKeys["GroundTruthSourceGroup"];
+            string experimentLabel = (string)Properties["ExperimentLabel"];
+            string path = (string)Properties["ResultsPath"];
+            SourceGroup groundTruthSourceGroup = (SourceGroup)Properties["GroundTruthSourceGroup"];
 
             // Open file
             string filename = DateTime.Now.ToString("yyyy-MM-dd__HH-mm-ss") + "-" + experimentLabel + ".txt";
@@ -199,9 +180,9 @@
         protected async Task WriteResultsCsv()
         {
             // Make aliases for some keys (so that code is more readable)
-            string experimentLabel = StringKeys["ExperimentLabel"];
-            string path = StringKeys["ResultsPath"];
-            SourceGroup groundTruthSourceGroup = SourceGroupKeys["GroundTruthSourceGroup"];
+            string experimentLabel = (string)Properties["ExperimentLabel"];
+            string path = (string)Properties["ResultsPath"];
+            SourceGroup groundTruthSourceGroup = (SourceGroup)Properties["GroundTruthSourceGroup"];
 
             // Open file
             string filename = DateTime.Now.ToString("yyyy-MM-dd__HH-mm-ss") + "-" + experimentLabel + ".csv";
