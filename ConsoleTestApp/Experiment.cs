@@ -100,24 +100,21 @@
             Finished = true;
         }
 
-        public async void ModelEventCallback(object sender, ModelEventArgs<Point> args)
+        public void ModelEventCallback(object sender, ModelEventArgs<Point> args)
         {
-            Console.WriteLine(args.Message);
-            await LogTxtWriter.WriteLineAsync(args.Message);
+            StringBuilder contents = new ();
+            contents.AppendLine(args.Message);
 
             if (args.Group != null)
             {
-                Console.WriteLine(args.Group);
-                await LogTxtWriter.WriteLineAsync(args.Group.ToString());
-
-                foreach (Point source in args.Group)
-                {
-                    await LogCsvWriter.WriteLineAsync(source.ToStringCartesianCsv() + "C,,");
-                }
+                contents.AppendLine(args.Group.ToString());
+                LogCsvWriter.Write(((SourceGroup)args.Group).ToStringCartesianCsv(category: "C", noLabels: true));
             }
 
-            Console.WriteLine();
-            await LogTxtWriter.WriteLineAsync();
+            contents.AppendLine();
+
+            Console.WriteLine(contents.ToString());
+            LogTxtWriter.WriteLine(contents.ToString());
         }
 
         //---------------------
