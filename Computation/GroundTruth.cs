@@ -41,7 +41,6 @@
             Delta = delta;
             PrepareErrors();
             CacheGroundTruth();
-            ErrorsOnElements = new ();
         }
 
         //---------------
@@ -64,15 +63,16 @@
 
             for (int i = 0; i < ErrorsOnElementsArray.Length; ++i)
             {
-                ErrorsOnElementsArray[i] = (rand.NextDouble() * 2) - 1;
-                norm += Math.Pow(ErrorsOnElementsArray[i], 2.0);
+                double temp = rand.NextDouble();
+                ErrorsOnElementsArray[i] = temp * Delta / Math.Sqrt(Grid.Elements[i].Square);
+                norm += Math.Pow(temp, 2);
             }
 
             norm = Math.Sqrt(norm);
 
             for (int i = 0; i < ErrorsOnElementsArray.Length; ++i)
             {
-                ErrorsOnElementsArray[i] = ErrorsOnElementsArray[i] * Delta / norm;
+                ErrorsOnElementsArray[i] /= norm;
             }
         }
 
