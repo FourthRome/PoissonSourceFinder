@@ -49,12 +49,13 @@
             double result = 0;
             for (int i = 0; i < SourceAmount; ++i)
             {
-                double temp = Math.Pow(Sources[i].Rho, 2) - Math.Pow(rho, 2);
+                double temp = Math.Pow(rho, 2) - Math.Pow(Sources[i].Rho, 2);
                 temp /= Math.Pow(Sources[i].SquareDistanceFrom(rho, phi, theta), 1.5);
-                result += temp;
+                result -= temp;
             }
 
-            return result / (4 * Math.PI * rho);
+            result /= rho;
+            return result;
         }
 
         public override string ToString()
