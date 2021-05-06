@@ -14,16 +14,8 @@
             double theta,
             Func<double, double, double, double> groundTruthNormalDerivative) // TODO: check the safety of the code for arbitrary coordinates
         {
-            double result = 0.0;
-
-            foreach (var source in group.Sources)
-            {
-                result += (Math.Pow(rho, 2) - Math.Pow(source.Rho, 2)) / Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 1.5);
-            }
-
-            result /= 4 * Math.PI * rho;
-            result += groundTruthNormalDerivative(rho, phi, theta);
-            // result *= Math.Sin(theta);  // COMMENTED OUT: probably a mistake
+            double result = group.NormalDerivative(rho, phi, theta);
+            result -= groundTruthNormalDerivative(rho, phi, theta);
             return result;
         }
 
@@ -78,8 +70,7 @@
         {
             return grid.Integrate((double rho, double phi, double theta) =>
             {
-                return Math.Pow(groundTruthNormalDerivative(rho, phi, theta) - group.NormalDerivative(rho, phi, theta), 2) *
-                    Math.Pow(rho, 2) * Math.Sin(theta);
+                return Math.Pow(group.CommonDerivativeComponent(rho, phi, theta, groundTruthNormalDerivative), 2) * Math.Sin(theta);
 
                 // TODO: Check which of the two calculations is correct
                 //return Math.Pow(groundTruthNormalDerivative(rho, phi, theta) - group.NormalDerivative(rho, phi, theta), 2);
@@ -92,13 +83,12 @@
             return (double rho, double phi, double theta) =>
             {
                 Point source = group.Sources[sourceNumber];
-                double result = (Math.Cos(phi - source.Phi) * Math.Sin(theta) * Math.Sin(source.Theta)) + (Math.Cos(theta) * Math.Cos(source.Theta));
-                result = source.Rho - (rho * result);
-                result *= Math.Pow(source.Rho, 2) - Math.Pow(rho, 2);
-                result *= 3 / (2 * Math.PI * Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5));
-                result += -source.Rho / (Math.PI * Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 1.5));
-                // result *= Radius;  // COMMENTED OUT: probably a mistake
-                result /= rho;
+                double result = source.AngleCosBetweenVectors(phi, theta);
+                result = rho * (source.Rho - result);
+                result *= Math.Pow(rho, 2) - Math.Pow(source.Rho, 2);
+                result *= 6;
+                result /= Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5);
+                result += 4 * source.Rho / Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 1.5);
                 return result;
             };
         }
@@ -113,7 +103,7 @@
                 double result = (Math.Pow(rho, 2) - Math.Pow(source.Rho, 2)) * source.Rho;
                 result *= Math.Sin(phi - source.Phi) * Math.Sin(theta) * Math.Sin(source.Theta);
                 result /= Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5);
-                result *= 3 / (2 * Math.PI); // COMMENTED OUT R^2: probably a mistake
+                result *= -6;
 
                 return result;
             };
@@ -129,7 +119,7 @@
                 double result = (Math.Pow(rho, 2) - Math.Pow(source.Rho, 2)) * source.Rho;
                 result *= (Math.Cos(phi - source.Phi) * Math.Sin(theta) * Math.Cos(source.Theta)) - (Math.Cos(theta) * Math.Sin(source.Theta));
                 result /= Math.Pow(source.SquareDistanceFrom(rho, phi, theta), 2.5);
-                result *= 3 / (2 * Math.PI);  // COMMENTED OUT R^2: probably a mistake
+                result *= -6;
 
                 return result;
             };
