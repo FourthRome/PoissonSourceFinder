@@ -44,7 +44,7 @@
         //-----------------------
         // Private static methods
         //-----------------------
-        protected static double GetSquare(SphericalGridElement element)
+        public static double GetSquare(SphericalGridElement element)
         {
             double result = 0.0;
             if (element.Type == SPHERICAL_GRID_TYPE.RECTANGULAR)
@@ -58,7 +58,7 @@
                     rightPhi += 2 * Math.PI;
                 }
 
-                result = element.Radius * (rightPhi - leftPhi) * (Math.Cos(smallerTheta) - Math.Cos(biggerTheta));
+                result = Math.Pow(element.Radius, 2) * (rightPhi - leftPhi) * (Math.Cos(smallerTheta) - Math.Cos(biggerTheta));
             }
 
             return result;
