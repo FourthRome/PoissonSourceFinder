@@ -56,7 +56,9 @@
                                 (aziOffset + ((i + 1) * AzimuthalStep), polOffset + ((j + 1) * PolarStep)),
                             };
 
-                            Elements.Add(new SphericalGridElement(SPHERICAL_GRID_TYPE.RECTANGULAR, borderNodes));
+                            var element = new SphericalGridElement(SPHERICAL_GRID_TYPE.RECTANGULAR, borderNodes);
+                            Elements.Add(element);
+                            Square += SphericalGridElement.GetSquare(element);
                         }
                     }
                 }

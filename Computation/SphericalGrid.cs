@@ -20,6 +20,8 @@
 
         public double Radius { get; protected set; }
 
+        public double Square { get; protected set; }
+
         //-------------
         // Constructors
         //-------------
@@ -27,6 +29,7 @@
         {
             Radius = radius;
             Elements = new ();
+            Square = 0.0;
         }
 
         //---------------
