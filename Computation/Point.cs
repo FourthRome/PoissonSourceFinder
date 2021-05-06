@@ -117,7 +117,7 @@
         // Private methods
         //----------------
         // Part of distance's computation
-        private double AngleCosBetweenVectors(double phi, double theta)
+        public double AngleCosBetweenVectors(double phi, double theta)
         {
             return (Math.Cos(phi - Phi) * Math.Sin(theta) * Math.Sin(Theta)) + (Math.Cos(theta) * Math.Cos(Theta));
         }
