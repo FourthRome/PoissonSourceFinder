@@ -90,6 +90,9 @@
             await LogCsvWriter.WriteAsync(InitialSourceGroup.ToStringCartesianCsv(category: "B"));
             await LogCsvWriter.WriteAsync(Model.Group.ToStringCartesianCsv(category: "С"));
 
+            await Output($"Relative derivative's delta: {GroundTruth.RelativeDelta}");
+            await Output($"Absolute derivative's delta: {GroundTruth.Delta}");
+
             // Generate output files
             await WriteResultsTxt();
             await WriteResultsCsv();
@@ -236,6 +239,8 @@
 
             contents.AppendLine($"Final score: {Model.Score}");
             contents.AppendLine($"Number of iterations: {Model.IterationsNumber}");
+            contents.AppendLine($"Relative derivative's delta: {GroundTruth.RelativeDelta}");
+            contents.AppendLine($"Absolute derivative's delta: {GroundTruth.Delta}");
 
             await file.WriteLineAsync(contents.ToString());
         }
