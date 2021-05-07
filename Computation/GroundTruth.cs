@@ -2,9 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
+    using LossFunctionExtensions;
 
     public class GroundTruth
     {
@@ -20,6 +18,10 @@
 
         public double Delta { get; protected set; }
 
+        public double RelativeDelta { get; protected set; }
+
+        public double ErrorFreeDerivativeNorm { get; protected set; }
+
         //---------------------
         // Protected properties
         //---------------------
@@ -34,11 +36,13 @@
         //-------------
         // Constructors
         //-------------
-        public GroundTruth(SourceGroup group, SphericalGrid grid, double delta = 0.0)
+        public GroundTruth(SourceGroup group, SphericalGrid grid, double relativeDelta = 0.0)
         {
             Group = group;
             Grid = grid;
-            Delta = delta;
+            RelativeDelta = relativeDelta;
+            ErrorFreeDerivativeNorm = Math.Sqrt(group.TargetFunction(grid, (rho, phi, theta) => 0.0));
+            Delta = RelativeDelta * ErrorFreeDerivativeNorm;
             PrepareErrors();
             CacheGroundTruth();
         }
@@ -63,13 +67,12 @@
 
             for (int i = 0; i < ErrorsOnElementsArray.Length; ++i)
             {
-                double temp = rand.NextDouble();
+                double temp = (rand.NextDouble() * 2) - 1.0;
                 ErrorsOnElementsArray[i] = temp * Delta / Math.Sqrt(Grid.Elements[i].Square);
                 norm += Math.Pow(temp, 2);
             }
 
             norm = Math.Sqrt(norm);
-
             for (int i = 0; i < ErrorsOnElementsArray.Length; ++i)
             {
                 ErrorsOnElementsArray[i] /= norm;

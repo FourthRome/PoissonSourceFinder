@@ -139,7 +139,7 @@
                 { "ScoreValueStoppingCondition", 0.0 },
                 { "ScoreImprovementStoppingCondition", 0.0 },
                 { "MoveNormStoppingCondition", 0.0 },
-                { "Delta", 0.0 },
+                { "RelativeDelta", 0.0 },
                 { "ExperimentLabel", "no-label" },
                 { "ResultsPath", "../../../../Results" },
                 { "LogsPath", "../../../../Logs" },
@@ -173,7 +173,7 @@
             GroundTruth = new (
                     (SourceGroup)Properties["GroundTruthSourceGroup"],
                     Grid,
-                    (double)Properties["Delta"]);
+                    (double)Properties["RelativeDelta"]);
 
             Model = new (
                 Grid,
